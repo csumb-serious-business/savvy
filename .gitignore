@@ -1,10 +1,10 @@
 
-# items below adapted from:
+### items below adapted from:
 #   https://gist.github.com/dedunumax/54e82214715e35439227
 #   https://github.com/github/gitignore/blob/master/Gradle.gitignore
 #   https://github.com/github/gitignore/blob/master/Java.gitignore
 
-# java
+## java
 .mtj.tmp/
 *.class
 *.ctxt
@@ -20,16 +20,16 @@
 hs_err_pid*
 
 
-# gradle
+## gradle
 !src/**/build/
 bin/
 **/build/
 .gradle
 .gradletasknamecache
 gradle-app.setting
+/target/
 
-
-# intellij
+## intellij
 out/
 .idea/
 .idea_modules/
@@ -38,7 +38,7 @@ out/
 *.iws
 
 
-# eclipse
+## eclipse
 .settings/
 tmp/
 .metadata
@@ -52,7 +52,7 @@ local.properties
 .loadpath
 .factorypath
 
-# netbeans
+## netbeans
 nbproject/private/
 build/
 nbbuild/
@@ -61,9 +61,10 @@ nbdist/
 nbactions.xml
 nb-configuration.xml
 
-# vs code
+## vs code
 .vscode/
 *.code-workspace
 
-# osx
+## osx
 .DS_Store
+
