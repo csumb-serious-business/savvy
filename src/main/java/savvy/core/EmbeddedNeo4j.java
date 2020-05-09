@@ -2,7 +2,13 @@ package savvy.core;
 
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.io.fs.FileUtils;
 
@@ -16,7 +22,10 @@ import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAM
  * and exposes some basic functionality
  */
 public class EmbeddedNeo4j {
-  private static final File databaseDirectory = new File("target/neo4j-hello-db");
+
+  private static final File databaseDirectory = new File("target/savvy-db");
+  private static final Label ENTITY_LABEL = Label.label("Entity");
+  private static final String NAME = "name";
 
   public String result;
 
@@ -67,7 +76,7 @@ public class EmbeddedNeo4j {
   public void setupIndex() {
     try (var tx = _db.beginTx()) {
       var schema = tx.schema();
-      _index = schema.indexFor(Label.label("message")).on("message").withName("message").create();
+      _index = schema.indexFor(ENTITY_LABEL).on(NAME).withName(NAME).create();
 
       tx.commit();
 
@@ -84,13 +93,13 @@ public class EmbeddedNeo4j {
   public void addData(String subject, String relationship, String object) {
     try (Transaction tx = _db.beginTx()) {
       _subject = tx.createNode();
-      _subject.setProperty("message", subject);
+      _subject.setProperty(NAME, subject);
 
       _object = tx.createNode();
-      _object.setProperty("message", object);
+      _object.setProperty(NAME, object);
 
       _relationship = _subject.createRelationshipTo(_object, RelTypes.KNOWS);
-      _relationship.setProperty("message", relationship);
+      _relationship.setProperty(NAME, relationship);
       tx.commit();
     }
   }
@@ -106,13 +115,13 @@ public class EmbeddedNeo4j {
       _object = tx.getNodeById(_object.getId());
       _relationship = tx.getRelationshipById(_relationship.getId());
 
-      System.out.print(_subject.getProperty("message"));
-      System.out.print(_relationship.getProperty("message"));
-      System.out.print(_object.getProperty("message"));
+      System.out.print(_subject.getProperty(NAME));
+      System.out.print(_relationship.getProperty(NAME));
+      System.out.print(_object.getProperty(NAME));
 
       result =
-        (_subject.getProperty("message")) + " → " + _relationship.getProperty("message") + " → "
-          + (_object.getProperty("message"));
+        (_subject.getProperty(NAME)) + " → " + _relationship.getProperty(NAME) + " → " + (_object
+          .getProperty(NAME));
 
       tx.commit();
     }
