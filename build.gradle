@@ -8,7 +8,7 @@ plugins {
 
 javafx {
     version = "14"
-    modules = ['javafx.controls']
+    modules = ['javafx.controls', 'javafx.fxml']
 }
 
 repositories {
@@ -20,6 +20,7 @@ dependencies {
     /// javafx -- UI
     implementation 'org.openjfx:javafx-controls:14'
     implementation 'org.openjfx:javafx-graphics:14'
+    implementation 'org.openjfx:javafx-fxml:14'
 
     runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
     runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"

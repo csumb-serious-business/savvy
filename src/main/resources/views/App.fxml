@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<GridPane xmlns:fx="http://javafx.com/fxml"
+          xmlns="http://javafx.com/javafx"
+          fx:controller="savvy.AppController"
+          prefHeight="400.0" prefWidth="800.0"
+          alignment="center"
+          hgap="10"
+          vgap="10"
+          gridLinesVisible="false"
+>
+    <!-- ^ gridLinesVisible="true" to see layout grid lines -->
+    <padding>
+        <Insets top="25" right="25" bottom="25" left="25"/>
+    </padding>
+
+    <HBox spacing="10"
+          GridPane.rowIndex="0"
+          GridPane.columnIndex="0"
+    >
+        <!-- 3 fields for sub, rel & obj -->
+        <TextField fx:id="_subject"/>
+        <TextField fx:id="_relationship"/>
+        <TextField fx:id="_object"/>
+    </HBox>
+    <HBox spacing="10"
+          GridPane.rowIndex="1"
+          GridPane.columnIndex="0"
+    >
+        <!-- space to push buttons right -->
+        <Region HBox.hgrow="ALWAYS"/>
+        <!-- buttons for save & load -->
+        <Button onAction="#save_action">Save</Button>
+        <Button onAction="#load_action">Load</Button>
+    </HBox>
+    <Separator
+            GridPane.rowIndex="2"
+            GridPane.columnIndex="0"
+    />
+
+    <VBox spacing="2"
+          GridPane.rowIndex="3"
+          GridPane.columnIndex="0"
+    >
+        <!-- messages for save & load -->
+        <Text fx:id="txt_save"/>
+        <Text fx:id="txt_load"/>
+    </VBox>
+
+</GridPane>
