@@ -37,7 +37,7 @@ public class App extends Application {
 
     // inject the db
     loader.<AppController>getController().setDB(_db);
-    stage.setScene(new Scene(root, 800, 400));
+    stage.setScene(new Scene(root));
 
     // show the scene
     stage.show();

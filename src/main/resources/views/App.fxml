@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.GridPane?>
@@ -31,29 +32,50 @@
         <TextField fx:id="_subject"/>
         <TextField fx:id="_relationship"/>
         <TextField fx:id="_object"/>
-    </HBox>
-    <HBox spacing="10"
-          GridPane.rowIndex="1"
-          GridPane.columnIndex="0"
-    >
-        <!-- space to push buttons right -->
-        <Region HBox.hgrow="ALWAYS"/>
-        <!-- buttons for save & load -->
+        <!-- save button -->
+        <Region HBox.hgrow="SOMETIMES"/>
         <Button onAction="#save_action">Save</Button>
-        <Button onAction="#load_action">Load</Button>
     </HBox>
     <Separator
-            GridPane.rowIndex="2"
+            GridPane.rowIndex="1"
             GridPane.columnIndex="0"
     />
 
+    <!-- TODO filter the list view -->
+    <HBox
+            GridPane.rowIndex="2"
+            GridPane.columnIndex="0"
+    >
+        <!-- filter field -->
+        <TextField fx:id="_filter"/>
+
+        <!-- load button -->
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button onAction="#filter_action">Load</Button>
+    </HBox>
+
+    <ListView fx:id="lv_facts"
+              GridPane.rowIndex="3"
+              GridPane.columnIndex="0"
+    >
+
+    </ListView>
+
+
+    <Separator
+            GridPane.rowIndex="4"
+            GridPane.columnIndex="0"
+    />
+
+
     <VBox spacing="2"
-          GridPane.rowIndex="3"
+          GridPane.rowIndex="5"
           GridPane.columnIndex="0"
     >
         <!-- messages for save & load -->
         <Text fx:id="txt_save"/>
         <Text fx:id="txt_load"/>
     </VBox>
+
 
 </GridPane>

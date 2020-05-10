@@ -2,10 +2,12 @@ package savvy;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import savvy.core.EmbeddedNeo4j;
+import savvy.core.Fact;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -17,11 +19,14 @@ public class AppController implements Initializable {
   public static AppController instance;
   private EmbeddedNeo4j _db;
 
+
   @FXML private TextField _subject;
   @FXML private TextField _relationship;
   @FXML private TextField _object;
+  @FXML private TextField _filter;
   @FXML private Text txt_save;
   @FXML private Text txt_load;
+  @FXML private ListView<Fact> lv_facts;
 
   public AppController() {
 
@@ -49,14 +54,20 @@ public class AppController implements Initializable {
     txt_save.setFill(Color.FIREBRICK);
     txt_save.setText("Saving -- sub: " + subject + ", rel: " + relationship + ", obj: " + object);
     _db.addData(subject, relationship, object);
+    lv_facts.getItems().add(new Fact(subject, relationship, object));
   }
 
   /**
-   * load action from the form
+   * filter action for the list view
    */
-  public void load_action() {
+  public void filter_action() {
+    //    var selection = lv_facts.getSelectionModel().getSelectedItem();
+    var filter = _filter.getText();
+
     txt_load.setFill(Color.FIREBRICK);
-    txt_load.setText("Loading: " + _db.readData());
+    //    txt_load.setText("Loading: " + _db.readData());
+    txt_load.setText("found: " + _db.readData(filter));
+    //    txt_load.setText("Loading: " + selection);
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
