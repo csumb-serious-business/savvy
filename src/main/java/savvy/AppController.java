@@ -64,7 +64,8 @@ public class AppController implements Initializable {
 
     txt_load.setFill(Color.FIREBRICK);
     //    txt_load.setText("Loading: " + _db.readData());
-    txt_load.setText("Loading: " + selection);
+    txt_load.setText("found: " + _db.readData(selection.getSubject()));
+    //    txt_load.setText("Loading: " + selection);
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {

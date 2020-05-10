@@ -11,9 +11,12 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.io.fs.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -26,7 +29,7 @@ public class EmbeddedNeo4j {
   private static final File databaseDirectory = new File("target/savvy-db");
   private static final Label ENTITY_LABEL = Label.label("Entity");
   private static final String NAME = "name";
-
+  private final Logger log = LoggerFactory.getLogger(this.getClass());
   public String result;
 
   private GraphDatabaseService _db;
@@ -66,20 +69,47 @@ public class EmbeddedNeo4j {
     }
     _dbms = new DatabaseManagementServiceBuilder(databaseDirectory).build();
     _db = _dbms.database(DEFAULT_DATABASE_NAME);
-    registerShutdownHook(_dbms, persistent);
 
+    // create entities index
+    createIndex();
+
+    registerShutdownHook(_dbms, persistent);
   }
 
   /**
-   * setup the index for lookup/edit of db entries
+   * setup the index for lookup/edit of entities in db
    */
-  public void setupIndex() {
+  public void createIndex() {
+    if (indexAlreadyExists()) {
+      return;
+    }
     try (var tx = _db.beginTx()) {
       var schema = tx.schema();
+
       _index = schema.indexFor(ENTITY_LABEL).on(NAME).withName(NAME).create();
 
       tx.commit();
 
+    }
+  }
+
+  private boolean indexAlreadyExists() {
+    try (var tx = _db.beginTx()) {
+      var indexes = tx.schema().getIndexes();
+      for (var index : indexes) {
+        for (var key : index.getPropertyKeys()) {
+          if (key.equals(NAME)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean isIndexed() {
+    try (Transaction tx = _db.beginTx()) {
+      return tx.schema().getIndexPopulationProgress(_index).getCompletedPercentage() == 100F;
     }
   }
 
@@ -92,7 +122,7 @@ public class EmbeddedNeo4j {
    */
   public void addData(String subject, String relationship, String object) {
     try (Transaction tx = _db.beginTx()) {
-      _subject = tx.createNode();
+      _subject = tx.createNode(ENTITY_LABEL);
       _subject.setProperty(NAME, subject);
 
       _object = tx.createNode();
@@ -115,9 +145,10 @@ public class EmbeddedNeo4j {
       _object = tx.getNodeById(_object.getId());
       _relationship = tx.getRelationshipById(_relationship.getId());
 
-      System.out.print(_subject.getProperty(NAME));
-      System.out.print(_relationship.getProperty(NAME));
-      System.out.print(_object.getProperty(NAME));
+
+      log.info("{}", _subject.getProperty(NAME));
+      log.info("{}", _relationship.getProperty(NAME));
+      log.info("{}", _object.getProperty(NAME));
 
       result =
         (_subject.getProperty(NAME)) + " → " + _relationship.getProperty(NAME) + " → " + (_object
@@ -126,6 +157,15 @@ public class EmbeddedNeo4j {
       tx.commit();
     }
     return result;
+  }
+
+  public String readData(String entityName) {
+    var list = List.of();
+    try (var tx = _db.beginTx()) {
+      var found = tx.findNodes(ENTITY_LABEL, NAME, entityName).stream().findFirst();
+
+      return found.map(node -> (node.getProperty(NAME)) + "").orElse("");
+    }
   }
 
 
