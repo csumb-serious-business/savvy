@@ -164,7 +164,8 @@ public class EmbeddedNeo4j {
     try (var tx = _db.beginTx()) {
       var found = tx.findNodes(ENTITY_LABEL, NAME, entityName).stream().findFirst();
 
-      return found.map(node -> (node.getProperty(NAME)) + "").orElse("");
+      // todo use a traversal to get matching facts and populate the list view
+      return found.map(node -> (node.getProperty(NAME)) + " → ???").orElse("NOT FOUND");
     }
   }
 

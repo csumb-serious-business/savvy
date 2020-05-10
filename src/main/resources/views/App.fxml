@@ -41,26 +41,32 @@
             GridPane.columnIndex="0"
     />
 
+    <!-- TODO filter the list view -->
+    <HBox
+            GridPane.rowIndex="2"
+            GridPane.columnIndex="0"
+    >
+        <!-- filter field -->
+        <TextField fx:id="_filter"/>
+
+        <!-- load button -->
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button onAction="#filter_action">Load</Button>
+    </HBox>
+
     <ListView fx:id="lv_facts"
-              GridPane.rowIndex="2"
+              GridPane.rowIndex="3"
               GridPane.columnIndex="0"
     >
 
     </ListView>
-    <HBox
-            GridPane.rowIndex="3"
-            GridPane.columnIndex="0"
-    >
-        <!-- load button -->
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button onAction="#load_action">Load</Button>
-    </HBox>
 
 
     <Separator
             GridPane.rowIndex="4"
             GridPane.columnIndex="0"
     />
+
 
     <VBox spacing="2"
           GridPane.rowIndex="5"

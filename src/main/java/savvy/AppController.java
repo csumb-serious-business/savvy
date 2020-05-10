@@ -23,6 +23,7 @@ public class AppController implements Initializable {
   @FXML private TextField _subject;
   @FXML private TextField _relationship;
   @FXML private TextField _object;
+  @FXML private TextField _filter;
   @FXML private Text txt_save;
   @FXML private Text txt_load;
   @FXML private ListView<Fact> lv_facts;
@@ -57,14 +58,15 @@ public class AppController implements Initializable {
   }
 
   /**
-   * load action from the form
+   * filter action for the list view
    */
-  public void load_action() {
-    var selection = lv_facts.getSelectionModel().getSelectedItem();
+  public void filter_action() {
+    //    var selection = lv_facts.getSelectionModel().getSelectedItem();
+    var filter = _filter.getText();
 
     txt_load.setFill(Color.FIREBRICK);
     //    txt_load.setText("Loading: " + _db.readData());
-    txt_load.setText("found: " + _db.readData(selection.getSubject()));
+    txt_load.setText("found: " + _db.readData(filter));
     //    txt_load.setText("Loading: " + selection);
   }
 
