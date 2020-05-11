@@ -51,7 +51,7 @@
 
         <!-- load button -->
         <Region HBox.hgrow="ALWAYS"/>
-        <Button onAction="#filter_action">Load</Button>
+        <Button onAction="#filter_action">Filter</Button>
     </HBox>
 
     <ListView fx:id="lv_facts"
@@ -73,8 +73,7 @@
           GridPane.columnIndex="0"
     >
         <!-- messages for save & load -->
-        <Text fx:id="txt_save"/>
-        <Text fx:id="txt_load"/>
+        <Text fx:id="txt_msg"/>
     </VBox>
 
 

@@ -11,6 +11,7 @@ import savvy.core.Fact;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 /**
  * Controller for the application's main window
@@ -24,8 +25,7 @@ public class AppController implements Initializable {
   @FXML private TextField _relationship;
   @FXML private TextField _object;
   @FXML private TextField _filter;
-  @FXML private Text txt_save;
-  @FXML private Text txt_load;
+  @FXML private Text txt_msg;
   @FXML private ListView<Fact> lv_facts;
 
   public AppController() {
@@ -51,8 +51,8 @@ public class AppController implements Initializable {
     String relationship = _relationship.getText();
     String object = _object.getText();
 
-    txt_save.setFill(Color.FIREBRICK);
-    txt_save.setText("Saving -- sub: " + subject + ", rel: " + relationship + ", obj: " + object);
+    txt_msg.setFill(Color.FIREBRICK);
+    txt_msg.setText("Saving -- sub: " + subject + ", rel: " + relationship + ", obj: " + object);
     _db.addData(subject, relationship, object);
     lv_facts.getItems().add(new Fact(subject, relationship, object));
   }
@@ -63,13 +63,23 @@ public class AppController implements Initializable {
   public void filter_action() {
     //    var selection = lv_facts.getSelectionModel().getSelectedItem();
     var filter = _filter.getText();
+    Set<Fact> data;
+    if (filter.equals("")) {
+      data = _db.readAll();
 
-    txt_load.setFill(Color.FIREBRICK);
-    //    txt_load.setText("Loading: " + _db.readData());
-    txt_load.setText("found: " + _db.readData(filter));
-    //    txt_load.setText("Loading: " + selection);
+    } else {
+      data = _db.readData(filter);
+    }
+
+    lv_facts.getItems().clear();
+    lv_facts.getItems().addAll(data);
+  }
+
+  public void loaded_action() {
+    lv_facts.getItems().addAll(_db.readAll());
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
+
   }
 }

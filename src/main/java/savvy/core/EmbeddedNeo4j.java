@@ -6,17 +6,19 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -29,13 +31,12 @@ public class EmbeddedNeo4j {
   private static final File databaseDirectory = new File("target/savvy-db");
   private static final Label ENTITY_LABEL = Label.label("Entity");
   private static final String NAME = "name";
+  private static final String CYPHER_MERGE =
+    String.format("MERGE (n:%1$s {%2$s: $%2$s}) RETURN n", ENTITY_LABEL, NAME);
+
   private final Logger log = LoggerFactory.getLogger(this.getClass());
-  public String result;
 
   private GraphDatabaseService _db;
-  private Node _subject;
-  private Node _object;
-  private Relationship _relationship;
   private DatabaseManagementService _dbms;
   private IndexDefinition _index;
 
@@ -70,45 +71,39 @@ public class EmbeddedNeo4j {
     _dbms = new DatabaseManagementServiceBuilder(databaseDirectory).build();
     _db = _dbms.database(DEFAULT_DATABASE_NAME);
 
-    // create entities index
-    createIndex();
+    // create constraint & index
+    createConstraint();
 
     registerShutdownHook(_dbms, persistent);
   }
 
   /**
-   * setup the index for lookup/edit of entities in db
+   * create constraint for unique entities (by name)
+   * create index for lookup/edit of entities in db
+   * (neo4j automatically creates the index with the constraint)
    */
-  public void createIndex() {
-    if (indexAlreadyExists()) {
-      return;
-    }
+  public void createConstraint() {
+
+    // create index if needed
     try (var tx = _db.beginTx()) {
-      var schema = tx.schema();
+      tx.schema().getConstraintByName(NAME);
+      _index = tx.schema().getIndexByName(NAME);
 
-      _index = schema.indexFor(ENTITY_LABEL).on(NAME).withName(NAME).create();
+    } catch (IllegalArgumentException e) {
+      try (var tx = _db.beginTx()) {
+        // entity (names) must be unique
+        tx.schema().constraintFor(ENTITY_LABEL).assertPropertyIsUnique(NAME).withName(NAME)
+          .create();
+        _index = tx.schema().getIndexByName(NAME);
 
-      tx.commit();
+        tx.commit();
 
-    }
-  }
-
-  private boolean indexAlreadyExists() {
-    try (var tx = _db.beginTx()) {
-      var indexes = tx.schema().getIndexes();
-      for (var index : indexes) {
-        for (var key : index.getPropertyKeys()) {
-          if (key.equals(NAME)) {
-            return true;
-          }
-        }
       }
     }
-    return false;
   }
 
   public boolean isIndexed() {
-    try (Transaction tx = _db.beginTx()) {
+    try (var tx = _db.beginTx()) {
       return tx.schema().getIndexPopulationProgress(_index).getCompletedPercentage() == 100F;
     }
   }
@@ -121,66 +116,128 @@ public class EmbeddedNeo4j {
    * @param object       the object of the fact
    */
   public void addData(String subject, String relationship, String object) {
-    try (Transaction tx = _db.beginTx()) {
-      _subject = tx.createNode(ENTITY_LABEL);
-      _subject.setProperty(NAME, subject);
+    addEntity(subject);
+    addEntity(object);
 
-      _object = tx.createNode();
-      _object.setProperty(NAME, object);
+    try (var tx = _db.beginTx()) {
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
 
-      _relationship = _subject.createRelationshipTo(_object, RelTypes.KNOWS);
-      _relationship.setProperty(NAME, relationship);
+      var rel = subNode.createRelationshipTo(objNode, RelTypes.KNOWS);
+      rel.setProperty(NAME, relationship);
+
       tx.commit();
+    }
+
+  }
+
+
+  /**
+   * adds an entity to the database if it did not exist yet
+   * note: it seems the fist call to this takes some time to execute
+   *
+   * @param name the name of the entity to create
+   * @return the node holding the new/already-existing entity
+   */
+  private Node addEntity(String name) {
+    try (var tx = _db.beginTx()) {
+      Map<String, Object> params = Map.of(NAME, name);
+      Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
+      tx.commit();
+      return result;
     }
   }
 
   /**
-   * read a fact from the database
+   * Traverse the graph collecting all relationships and entities
+   * that are connected to a given entity and return a fact for each
    *
-   * @return the fact if found
+   * @param entityName the name of the entity to lookup
+   * @return a set of Facts corresponding to the relationships
+   * found in the traversal
    */
-  public String readData() {
-    try (Transaction tx = _db.beginTx()) {
-      _subject = tx.getNodeById(_subject.getId());
-      _object = tx.getNodeById(_object.getId());
-      _relationship = tx.getRelationshipById(_relationship.getId());
+  public Set<Fact> readData(String entityName) {
 
-
-      log.info("{}", _subject.getProperty(NAME));
-      log.info("{}", _relationship.getProperty(NAME));
-      log.info("{}", _object.getProperty(NAME));
-
-      result =
-        (_subject.getProperty(NAME)) + " → " + _relationship.getProperty(NAME) + " → " + (_object
-          .getProperty(NAME));
-
-      tx.commit();
-    }
-    return result;
-  }
-
-  public String readData(String entityName) {
-    var list = List.of();
+    var set = new TreeSet<Fact>();
     try (var tx = _db.beginTx()) {
       var found = tx.findNodes(ENTITY_LABEL, NAME, entityName).stream().findFirst();
+      if (found.isEmpty()) {
+        return Set.of();
+      }
+      var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.KNOWS)
+        .evaluator(Evaluators.excludeStartPosition()).traverse(found.get());
 
-      // todo use a traversal to get matching facts and populate the list view
-      return found.map(node -> (node.getProperty(NAME)) + " → ???").orElse("NOT FOUND");
+      for (var path : paths) {
+        set.add(pathAsFact(path));
+      }
+
+      return set;
+
     }
   }
 
+
+  /**
+   * Traverse the graph collecting relationships for all entities
+   *
+   * @return returns a set of Facts corresponding to the relationships
+   */
+  public Set<Fact> readAll() {
+    var set = new TreeSet<Fact>();
+
+    try (var tx = _db.beginTx()) {
+      tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
+        var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.KNOWS)
+          .evaluator(Evaluators.excludeStartPosition()).traverse(n);
+
+        for (var path : paths) {
+          set.add(pathAsFact(path));
+        }
+      });
+
+    }
+    return set;
+  }
+
+  /**
+   * For a given path, gather its subject, relationship and object
+   * and create a fact from it
+   *
+   * @param path the path containing the relationship
+   * @return a corresponding Fact
+   */
+  private Fact pathAsFact(Path path) {
+    var rel = path.lastRelationship();
+    var r = rel.getProperty(NAME).toString();
+    var s = rel.getStartNode().getProperty(NAME).toString();
+    var o = rel.getEndNode().getProperty(NAME).toString();
+    return new Fact(s, r, o);
+  }
 
   /**
    * remove a fact from the database
    */
-  public void removeData() {
-    try (Transaction tx = _db.beginTx()) {
+  public void removeData(String subject, String relationship, String object) {
+    try (var tx = _db.beginTx()) {
 
-      _subject = tx.getNodeById(_subject.getId());
-      _object = tx.getNodeById(_object.getId());
-      _subject.getSingleRelationship(RelTypes.KNOWS, Direction.OUTGOING).delete();
-      _subject.delete();
-      _object.delete();
+      // find & delete the relationship between subject and object
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      subNode.getRelationships(Direction.OUTGOING, RelTypes.KNOWS).forEach(rel -> {
+        if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME).equals(relationship)) {
+          rel.delete();
+        }
+      });
+
+      // delete subject if now unused
+      if (!subNode.hasRelationship()) {
+        subNode.delete();
+      }
+
+      // delete object if now unused
+      if (!objNode.hasRelationship()) {
+        objNode.delete();
+      }
 
       tx.commit();
     }
