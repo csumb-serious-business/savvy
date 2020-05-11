@@ -1,6 +1,8 @@
 package savvy.core;
 
-public class Fact {
+import java.util.Objects;
+
+public class Fact implements Comparable<Fact> {
   private final String subject;
   private final String relationship;
   private final String object;
@@ -11,9 +13,22 @@ public class Fact {
     this.object = object;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (!(o instanceof Fact))
+      return false;
+    Fact fact = (Fact) o;
+    return subject.equals(fact.subject) && relationship.equals(fact.relationship) && object
+      .equals(fact.object);
+  }
+
+  @Override public int hashCode() {
+    return Objects.hash(subject, relationship, object);
+  }
+
   @Override public String toString() {
-    return "Fact{" + "subject='" + subject + '\'' + ", relationship='" + relationship + '\''
-      + ", object='" + object + '\'' + '}';
+    return subject + " | " + relationship + " | " + object;
   }
 
   public String getSubject() {
@@ -26,5 +41,9 @@ public class Fact {
 
   public String getObject() {
     return object;
+  }
+
+  @Override public int compareTo(Fact o) {
+    return this.toString().compareTo(o.toString());
   }
 }

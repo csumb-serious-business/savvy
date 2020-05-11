@@ -6,17 +6,19 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -101,7 +103,7 @@ public class EmbeddedNeo4j {
   }
 
   public boolean isIndexed() {
-    try (Transaction tx = _db.beginTx()) {
+    try (var tx = _db.beginTx()) {
       return tx.schema().getIndexPopulationProgress(_index).getCompletedPercentage() == 100F;
     }
   }
@@ -117,7 +119,7 @@ public class EmbeddedNeo4j {
     addEntity(subject);
     addEntity(object);
 
-    try (Transaction tx = _db.beginTx()) {
+    try (var tx = _db.beginTx()) {
       var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
       var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
 
@@ -129,7 +131,15 @@ public class EmbeddedNeo4j {
 
   }
 
-  public Node addEntity(String name) {
+
+  /**
+   * adds an entity to the database if it did not exist yet
+   * note: it seems the fist call to this takes some time to execute
+   *
+   * @param name the name of the entity to create
+   * @return the node holding the new/already-existing entity
+   */
+  private Node addEntity(String name) {
     try (var tx = _db.beginTx()) {
       Map<String, Object> params = Map.of(NAME, name);
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
@@ -138,22 +148,77 @@ public class EmbeddedNeo4j {
     }
   }
 
-  public String readData(String entityName) {
-    var list = List.of();
+  /**
+   * Traverse the graph collecting all relationships and entities
+   * that are connected to a given entity and return a fact for each
+   *
+   * @param entityName the name of the entity to lookup
+   * @return a set of Facts corresponding to the relationships
+   * found in the traversal
+   */
+  public Set<Fact> readData(String entityName) {
+
+    var set = new TreeSet<Fact>();
     try (var tx = _db.beginTx()) {
       var found = tx.findNodes(ENTITY_LABEL, NAME, entityName).stream().findFirst();
+      if (found.isEmpty()) {
+        return Set.of();
+      }
+      var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.KNOWS)
+        .evaluator(Evaluators.excludeStartPosition()).traverse(found.get());
 
-      // todo use a traversal to get matching facts and populate the list view
-      return found.map(node -> (node.getProperty(NAME)) + " → ???").orElse("NOT FOUND");
+      for (var path : paths) {
+        set.add(pathAsFact(path));
+      }
+
+      return set;
+
     }
   }
 
 
   /**
+   * Traverse the graph collecting relationships for all entities
+   *
+   * @return returns a set of Facts corresponding to the relationships
+   */
+  public Set<Fact> readAll() {
+    var set = new TreeSet<Fact>();
+
+    try (var tx = _db.beginTx()) {
+      tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
+        var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.KNOWS)
+          .evaluator(Evaluators.excludeStartPosition()).traverse(n);
+
+        for (var path : paths) {
+          set.add(pathAsFact(path));
+        }
+      });
+
+    }
+    return set;
+  }
+
+  /**
+   * For a given path, gather its subject, relationship and object
+   * and create a fact from it
+   *
+   * @param path the path containing the relationship
+   * @return a corresponding Fact
+   */
+  private Fact pathAsFact(Path path) {
+    var rel = path.lastRelationship();
+    var r = rel.getProperty(NAME).toString();
+    var s = rel.getStartNode().getProperty(NAME).toString();
+    var o = rel.getEndNode().getProperty(NAME).toString();
+    return new Fact(s, r, o);
+  }
+
+  /**
    * remove a fact from the database
    */
   public void removeData(String subject, String relationship, String object) {
-    try (Transaction tx = _db.beginTx()) {
+    try (var tx = _db.beginTx()) {
 
       // find & delete the relationship between subject and object
       var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
