@@ -6,7 +6,6 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -29,13 +29,12 @@ public class EmbeddedNeo4j {
   private static final File databaseDirectory = new File("target/savvy-db");
   private static final Label ENTITY_LABEL = Label.label("Entity");
   private static final String NAME = "name";
+  private static final String CYPHER_MERGE =
+    String.format("MERGE (n:%1$s {%2$s: $%2$s}) RETURN n", ENTITY_LABEL, NAME);
+
   private final Logger log = LoggerFactory.getLogger(this.getClass());
-  public String result;
 
   private GraphDatabaseService _db;
-  private Node _subject;
-  private Node _object;
-  private Relationship _relationship;
   private DatabaseManagementService _dbms;
   private IndexDefinition _index;
 
@@ -70,41 +69,35 @@ public class EmbeddedNeo4j {
     _dbms = new DatabaseManagementServiceBuilder(databaseDirectory).build();
     _db = _dbms.database(DEFAULT_DATABASE_NAME);
 
-    // create entities index
-    createIndex();
+    // create constraint & index
+    createConstraint();
 
     registerShutdownHook(_dbms, persistent);
   }
 
   /**
-   * setup the index for lookup/edit of entities in db
+   * create constraint for unique entities (by name)
+   * create index for lookup/edit of entities in db
+   * (neo4j automatically creates the index with the constraint)
    */
-  public void createIndex() {
-    if (indexAlreadyExists()) {
-      return;
-    }
+  public void createConstraint() {
+
+    // create index if needed
     try (var tx = _db.beginTx()) {
-      var schema = tx.schema();
+      tx.schema().getConstraintByName(NAME);
+      _index = tx.schema().getIndexByName(NAME);
 
-      _index = schema.indexFor(ENTITY_LABEL).on(NAME).withName(NAME).create();
+    } catch (IllegalArgumentException e) {
+      try (var tx = _db.beginTx()) {
+        // entity (names) must be unique
+        tx.schema().constraintFor(ENTITY_LABEL).assertPropertyIsUnique(NAME).withName(NAME)
+          .create();
+        _index = tx.schema().getIndexByName(NAME);
 
-      tx.commit();
+        tx.commit();
 
-    }
-  }
-
-  private boolean indexAlreadyExists() {
-    try (var tx = _db.beginTx()) {
-      var indexes = tx.schema().getIndexes();
-      for (var index : indexes) {
-        for (var key : index.getPropertyKeys()) {
-          if (key.equals(NAME)) {
-            return true;
-          }
-        }
       }
     }
-    return false;
   }
 
   public boolean isIndexed() {
@@ -121,42 +114,28 @@ public class EmbeddedNeo4j {
    * @param object       the object of the fact
    */
   public void addData(String subject, String relationship, String object) {
+    addEntity(subject);
+    addEntity(object);
+
     try (Transaction tx = _db.beginTx()) {
-      _subject = tx.createNode(ENTITY_LABEL);
-      _subject.setProperty(NAME, subject);
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
 
-      _object = tx.createNode();
-      _object.setProperty(NAME, object);
+      var rel = subNode.createRelationshipTo(objNode, RelTypes.KNOWS);
+      rel.setProperty(NAME, relationship);
 
-      _relationship = _subject.createRelationshipTo(_object, RelTypes.KNOWS);
-      _relationship.setProperty(NAME, relationship);
       tx.commit();
     }
+
   }
 
-  /**
-   * read a fact from the database
-   *
-   * @return the fact if found
-   */
-  public String readData() {
-    try (Transaction tx = _db.beginTx()) {
-      _subject = tx.getNodeById(_subject.getId());
-      _object = tx.getNodeById(_object.getId());
-      _relationship = tx.getRelationshipById(_relationship.getId());
-
-
-      log.info("{}", _subject.getProperty(NAME));
-      log.info("{}", _relationship.getProperty(NAME));
-      log.info("{}", _object.getProperty(NAME));
-
-      result =
-        (_subject.getProperty(NAME)) + " → " + _relationship.getProperty(NAME) + " → " + (_object
-          .getProperty(NAME));
-
+  public Node addEntity(String name) {
+    try (var tx = _db.beginTx()) {
+      Map<String, Object> params = Map.of(NAME, name);
+      Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
       tx.commit();
+      return result;
     }
-    return result;
   }
 
   public String readData(String entityName) {
@@ -173,14 +152,27 @@ public class EmbeddedNeo4j {
   /**
    * remove a fact from the database
    */
-  public void removeData() {
+  public void removeData(String subject, String relationship, String object) {
     try (Transaction tx = _db.beginTx()) {
 
-      _subject = tx.getNodeById(_subject.getId());
-      _object = tx.getNodeById(_object.getId());
-      _subject.getSingleRelationship(RelTypes.KNOWS, Direction.OUTGOING).delete();
-      _subject.delete();
-      _object.delete();
+      // find & delete the relationship between subject and object
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      subNode.getRelationships(Direction.OUTGOING, RelTypes.KNOWS).forEach(rel -> {
+        if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME).equals(relationship)) {
+          rel.delete();
+        }
+      });
+
+      // delete subject if now unused
+      if (!subNode.hasRelationship()) {
+        subNode.delete();
+      }
+
+      // delete object if now unused
+      if (!objNode.hasRelationship()) {
+        objNode.delete();
+      }
 
       tx.commit();
     }
