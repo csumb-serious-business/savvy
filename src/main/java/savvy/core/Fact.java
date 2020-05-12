@@ -46,4 +46,7 @@ public class Fact implements Comparable<Fact> {
   @Override public int compareTo(Fact o) {
     return this.toString().compareTo(o.toString());
   }
+
 }
+
+
