@@ -8,10 +8,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import savvy.core.EmbeddedNeo4j;
 import savvy.core.Fact;
+import savvy.ui.FactItemView;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Controller for the application's main window
@@ -26,7 +29,8 @@ public class AppController implements Initializable {
   @FXML private TextField _object;
   @FXML private TextField _filter;
   @FXML private Text txt_msg;
-  @FXML private ListView<Fact> lv_facts;
+  //  @FXML private ListView<Fact> lv_facts;
+  @FXML private ListView<FactItemView> lv_facts;
 
   public AppController() {
 
@@ -54,7 +58,9 @@ public class AppController implements Initializable {
     txt_msg.setFill(Color.FIREBRICK);
     txt_msg.setText("Saving -- sub: " + subject + ", rel: " + relationship + ", obj: " + object);
     _db.addData(subject, relationship, object);
-    lv_facts.getItems().add(new Fact(subject, relationship, object));
+    var fact = new Fact(subject, relationship, object);
+    lv_facts.getItems().add(new FactItemView(fact, lv_facts, _db));
+    //    lv_facts.getItems().add(new Fact(subject, relationship, object));
   }
 
   /**
@@ -72,11 +78,18 @@ public class AppController implements Initializable {
     }
 
     lv_facts.getItems().clear();
-    lv_facts.getItems().addAll(data);
+    List<FactItemView> layouts =
+      data.stream().map(it -> new FactItemView(it, lv_facts, _db)).collect(Collectors.toList());
+    lv_facts.getItems().addAll(layouts);
+    //    lv_facts.getItems().addAll(data);
   }
 
   public void loaded_action() {
-    lv_facts.getItems().addAll(_db.readAll());
+    List<FactItemView> layouts =
+      _db.readAll().stream().map(it -> new FactItemView(it, lv_facts, _db))
+        .collect(Collectors.toList());
+    lv_facts.getItems().addAll(layouts);
+    //    lv_facts.getItems().addAll(_db.readAll());
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
