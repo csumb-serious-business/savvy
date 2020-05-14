@@ -52,14 +52,19 @@ public class FactItemView extends HBox {
 
   private void editMode() {
 
+    final double width = this.widthProperty().doubleValue()/5.0d;
+
     var subject = new TextField();
     subject.setText(_fact.getSubject());
+    subject.setMaxWidth(width);
 
     var relationship = new TextField();
     relationship.setText(_fact.getRelationship());
+    relationship.setMaxWidth(width);
 
     var object = new TextField();
     object.setText(_fact.getObject());
+    object.setMaxWidth(width);
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
