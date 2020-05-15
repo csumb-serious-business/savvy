@@ -36,12 +36,12 @@
         <Region HBox.hgrow="SOMETIMES"/>
         <Button onAction="#save_action">Save</Button>
     </HBox>
+
     <Separator
             GridPane.rowIndex="1"
             GridPane.columnIndex="0"
     />
 
-    <!-- TODO filter the list view -->
     <HBox
             GridPane.rowIndex="2"
             GridPane.columnIndex="0"
@@ -57,16 +57,12 @@
     <ListView fx:id="lv_facts"
               GridPane.rowIndex="3"
               GridPane.columnIndex="0"
-    >
-
-    </ListView>
-
+    />
 
     <Separator
             GridPane.rowIndex="4"
             GridPane.columnIndex="0"
     />
-
 
     <VBox spacing="2"
           GridPane.rowIndex="5"
@@ -75,6 +71,5 @@
         <!-- messages for save & load -->
         <Text fx:id="txt_msg"/>
     </VBox>
-
 
 </GridPane>

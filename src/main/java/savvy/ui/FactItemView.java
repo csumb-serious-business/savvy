@@ -39,7 +39,7 @@ public class FactItemView extends HBox {
     btn_delete.setText("Delete");
 
     btn_delete.setOnAction(ev -> {
-      _db.removeData(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
+      _db.deleteFact(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
       _parent.getItems().remove(this);
     });
 
@@ -78,9 +78,9 @@ public class FactItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
       // remove the previous fact data
-      _db.removeData(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
+      _db.deleteFact(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
       // add the updated version
-      _db.addData(subject.getText(), relationship.getText(), object.getText());
+      _db.createFact(subject.getText(), relationship.getText(), object.getText());
 
       // update the underlying fact
       this._fact = new Fact(subject.getText(), relationship.getText(), object.getText());

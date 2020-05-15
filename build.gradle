@@ -19,12 +19,39 @@ dependencies {
 
     /// javafx -- UI
     implementation 'org.openjfx:javafx-controls:14'
+    implementation 'org.openjfx:javafx-base:14'
     implementation 'org.openjfx:javafx-graphics:14'
     implementation 'org.openjfx:javafx-fxml:14'
+
+    runtimeOnly "org.openjfx:javafx-controls:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-controls:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-controls:$javafx.version:mac"
+
+    runtimeOnly "org.openjfx:javafx-base:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-base:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-base:$javafx.version:mac"
 
     runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
     runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
     runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+
+    runtimeOnly "org.openjfx:javafx-fxml:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-fxml:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-fxml:$javafx.version:mac"
+
+    /// controlsfx -- UI controls
+    implementation 'org.controlsfx:controlsfx:11.0.1'
+
+    // NOTE: the latest version _is_ 8.0.1!
+    // 8.0.7 was published by mistake
+    compile 'io.datafx:datafx:8.0.1'
+    compile 'io.datafx:flow:8.0.1'
+
+    // FontAwesome
+    // Versions higher than 2.x are for Java 11
+    compile 'org.kordamp.ikonli:ikonli-javafx:2.4.0'
+    compile 'org.kordamp.ikonli:ikonli-fontawesome5-pack:2.4.0'
+
 
     /// neo4j -- DB
     implementation 'org.neo4j:neo4j:4.0.3'
@@ -39,10 +66,19 @@ dependencies {
 
 application {
     mainClassName = 'savvy.Launcher'
+    applicationDefaultJvmArgs = [
+            "--add-opens=javafx.graphics/com.sun.javafx.css=ALL-UNNAMED"
+    ]
 }
 
 test {
     useJUnitPlatform()
+}
+
+run {
+    jvmArgs = [
+               '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED'
+    ]
 }
 
 // fixes .bat in windows (the classpath was too long)
