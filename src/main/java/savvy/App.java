@@ -32,7 +32,7 @@ public class App extends Application {
     }
 
     // load the FXML
-    var loader = new FXMLLoader(getClass().getClassLoader().getResource("views/App.fxml"));
+    var loader = new FXMLLoader(getClass().getClassLoader().getResource("views/app.fxml"));
     Parent root = loader.load();
 
     // inject the db

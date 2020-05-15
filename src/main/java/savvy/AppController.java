@@ -1,5 +1,8 @@
 package savvy;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
@@ -22,9 +25,9 @@ import java.util.stream.Collectors;
  */
 public class AppController implements Initializable {
   public static AppController instance;
+  private final ObservableSet<String> _entities;
+  private final ObservableSet<String> _relationships;
   private EmbeddedNeo4j _db;
-
-
   @FXML private TextField _subject;
   @FXML private TextField _relationship;
   @FXML private TextField _object;
@@ -32,13 +35,13 @@ public class AppController implements Initializable {
   @FXML private Text txt_msg;
   @FXML private ListView<FactItemView> lv_facts;
 
-  private Set<String> _entities;
-  private Set<String> _relationships;
-
   public AppController() {
 
     instance = this;
+    _entities = FXCollections.observableSet();
+    _relationships = FXCollections.observableSet();
   }
+
 
   /**
    * sets the embedded neo4j db
@@ -67,8 +70,8 @@ public class AppController implements Initializable {
     lv_facts.getItems().add(new FactItemView(fact, lv_facts, _db));
     _relationships.add(relationship);
     _entities.addAll(Set.of(subject, object));
-    bindAutoCompleteFields();
   }
+
 
   /**
    * filter action for the list view
@@ -98,20 +101,21 @@ public class AppController implements Initializable {
         .collect(Collectors.toList());
     lv_facts.getItems().addAll(layouts);
 
-    _entities = _db.readAllEntities();
-    _relationships = _db.readAllRelationships();
+    // wire entities (observable) to fields (observers)
+    _entities.addListener((SetChangeListener<String>) change -> {
+      TextFields.bindAutoCompletion(_object, _entities);
+      TextFields.bindAutoCompletion(_subject, _entities);
+      TextFields.bindAutoCompletion(_filter, _entities);
+    });
 
-    bindAutoCompleteFields();
-  }
+    // wire relationships (observable) to fields (observers)
+    _relationships.addListener((SetChangeListener<String>) change -> TextFields
+      .bindAutoCompletion(_relationship, _relationships));
 
-  /**
-   * binds the autocompletion values to their corresponding text fields
-   */
-  private void bindAutoCompleteFields() {
-    TextFields.bindAutoCompletion(_subject, _entities);
-    TextFields.bindAutoCompletion(_object, _entities);
-    TextFields.bindAutoCompletion(_filter, _entities);
-    TextFields.bindAutoCompletion(_relationship, _relationships);
+    // populate entities, relationships (triggers value changes)
+    _entities.addAll(_db.readAllEntities());
+    _relationships.addAll(_db.readAllRelationships());
+
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {

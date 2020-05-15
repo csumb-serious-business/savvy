@@ -52,7 +52,7 @@ public class FactItemView extends HBox {
 
   private void editMode() {
 
-    final double width = this.widthProperty().doubleValue()/5.0d;
+    final double width = this.widthProperty().doubleValue() / 5.0d;
 
     var subject = new TextField();
     subject.setText(_fact.getSubject());
@@ -77,10 +77,19 @@ public class FactItemView extends HBox {
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
+      // go straight to view-mode if no change
+      var fact = new Fact(subject.getText(), relationship.getText(), object.getText());
+
+      if (this._fact.equals(fact)) {
+        this.viewMode();
+        return;
+      }
+
       // remove the previous fact data
-      _db.deleteFact(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
+      _db.deleteFact(_fact);
+
       // add the updated version
-      _db.createFact(subject.getText(), relationship.getText(), object.getText());
+      _db.createFact(fact);
 
       // update the underlying fact
       this._fact = new Fact(subject.getText(), relationship.getText(), object.getText());
