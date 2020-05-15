@@ -41,6 +41,7 @@ public class EmbeddedNeo4j {
   private IndexDefinition _index;
 
 
+  //=== DB management ===========================================================================\\
   private static void registerShutdownHook(final DatabaseManagementService managementService,
     boolean persist) {
 
@@ -102,11 +103,31 @@ public class EmbeddedNeo4j {
     }
   }
 
+  /**
+   * checks whether the index is populated
+   *
+   * @return true is index population is complete
+   */
   public boolean isIndexed() {
     try (var tx = _db.beginTx()) {
       return tx.schema().getIndexPopulationProgress(_index).getCompletedPercentage() == 100F;
     }
   }
+
+  /**
+   * manually shutdown the database
+   * (usually we rely on the shutdown hook)
+   */
+  public void shutDown() {
+    System.out.println("Shutting down database ...");
+    _dbms.shutdown();
+
+  }
+
+
+  //=== DB crud =================================================================================\\
+
+  //--- facts -----------------------------------------------------------------------------------\\
 
   /**
    * add a fact to the database
@@ -115,15 +136,15 @@ public class EmbeddedNeo4j {
    * @param relationship the relationship between the subject and object
    * @param object       the object of the fact
    */
-  public void addData(String subject, String relationship, String object) {
-    addEntity(subject);
-    addEntity(object);
+  public void createFact(String subject, String relationship, String object) {
+    createEntity(subject);
+    createEntity(object);
 
     try (var tx = _db.beginTx()) {
       var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
       var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
 
-      var rel = subNode.createRelationshipTo(objNode, RelTypes.KNOWS);
+      var rel = subNode.createRelationshipTo(objNode, RelTypes.f2_1);
       rel.setProperty(NAME, relationship);
 
       tx.commit();
@@ -131,22 +152,37 @@ public class EmbeddedNeo4j {
 
   }
 
-
   /**
-   * adds an entity to the database if it did not exist yet
-   * note: it seems the fist call to this takes some time to execute
-   *
-   * @param name the name of the entity to create
-   * @return the node holding the new/already-existing entity
+   * remove a fact from the database
+   * note: if an entity has no remaining facts, it will be removed
    */
-  private Node addEntity(String name) {
+  public void deleteFact(String subject, String relationship, String object) {
     try (var tx = _db.beginTx()) {
-      Map<String, Object> params = Map.of(NAME, name);
-      Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
+
+      // find & delete the relationship between subject and object
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      subNode.getRelationships(Direction.OUTGOING, RelTypes.f2_1).forEach(rel -> {
+        if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME).equals(relationship)) {
+          rel.delete();
+        }
+      });
+
+      // delete subject if now unused
+      if (!subNode.hasRelationship()) {
+        subNode.delete();
+      }
+
+      // delete object if now unused
+      if (!objNode.hasRelationship()) {
+        objNode.delete();
+      }
+
       tx.commit();
-      return result;
     }
   }
+
+
 
   /**
    * Traverse the graph collecting all relationships and entities
@@ -156,7 +192,7 @@ public class EmbeddedNeo4j {
    * @return a set of Facts corresponding to the relationships
    * found in the traversal
    */
-  public Set<Fact> readData(String entityName) {
+  public Set<Fact> readRelatedFacts(String entityName) {
 
     var set = new TreeSet<Fact>();
     try (var tx = _db.beginTx()) {
@@ -164,7 +200,7 @@ public class EmbeddedNeo4j {
       if (found.isEmpty()) {
         return Set.of();
       }
-      var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.KNOWS)
+      var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.f2_1)
         .evaluator(Evaluators.excludeStartPosition()).traverse(found.get());
 
       for (var path : paths) {
@@ -176,18 +212,17 @@ public class EmbeddedNeo4j {
     }
   }
 
-
   /**
    * Traverse the graph collecting relationships for all entities
    *
    * @return returns a set of Facts corresponding to the relationships
    */
-  public Set<Fact> readAll() {
+  public Set<Fact> readAllFacts() {
     var set = new TreeSet<Fact>();
 
     try (var tx = _db.beginTx()) {
       tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
-        var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.KNOWS)
+        var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.f2_1)
           .evaluator(Evaluators.excludeStartPosition()).traverse(n);
 
         for (var path : paths) {
@@ -214,47 +249,57 @@ public class EmbeddedNeo4j {
     return new Fact(s, r, o);
   }
 
+
+
+  //--- entities --------------------------------------------------------------------------------\\
+
+
   /**
-   * remove a fact from the database
+   * adds an entity to the database if it did not exist yet
+   * note: it seems the fist call to this takes some time to execute
+   *
+   * @param name the name of the entity to create
+   * @return the node holding the new/already-existing entity
    */
-  public void removeData(String subject, String relationship, String object) {
+  private Node createEntity(String name) {
     try (var tx = _db.beginTx()) {
-
-      // find & delete the relationship between subject and object
-      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
-      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
-      subNode.getRelationships(Direction.OUTGOING, RelTypes.KNOWS).forEach(rel -> {
-        if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME).equals(relationship)) {
-          rel.delete();
-        }
-      });
-
-      // delete subject if now unused
-      if (!subNode.hasRelationship()) {
-        subNode.delete();
-      }
-
-      // delete object if now unused
-      if (!objNode.hasRelationship()) {
-        objNode.delete();
-      }
-
+      Map<String, Object> params = Map.of(NAME, name);
+      Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
       tx.commit();
+      return result;
     }
   }
 
   /**
-   * manually shutdown the database
-   * (usually we rely on the shutdown hook)
+   * Gathers a set of all entities within the database
+   *
+   * @return the entities
    */
-  public void shutDown() {
-    System.out.println("Shutting down database ...");
-    _dbms.shutdown();
+  public Set<String> readAllEntities() {
+    var entities = new TreeSet<String>();
+    try (var tx = _db.beginTx()) {
+      tx.findNodes(ENTITY_LABEL).stream()
+        .forEach(n -> entities.add(n.getProperty(NAME).toString()));
+    }
 
+    return entities;
+  }
+
+  //--- relationships ---------------------------------------------------------------------------\\
+
+  /**
+   * Gathers a set of all the relationships defined within the database
+   *
+   * @return the relationships
+   */
+  public Set<String> readAllRelationships() {
+    var relationships = new TreeSet<String>();
+    readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
+    return relationships;
   }
 
   // describes the types of relationships within the database
   private enum RelTypes implements RelationshipType {
-    KNOWS
+    f2_1 // a fact relationship: 2 entities & 1 relationship
   }
 }

@@ -6,6 +6,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import org.controlsfx.control.textfield.TextFields;
 import savvy.core.EmbeddedNeo4j;
 import savvy.core.Fact;
 import savvy.ui.FactItemView;
@@ -29,8 +30,10 @@ public class AppController implements Initializable {
   @FXML private TextField _object;
   @FXML private TextField _filter;
   @FXML private Text txt_msg;
-  //  @FXML private ListView<Fact> lv_facts;
   @FXML private ListView<FactItemView> lv_facts;
+
+  private Set<String> _entities;
+  private Set<String> _relationships;
 
   public AppController() {
 
@@ -57,39 +60,58 @@ public class AppController implements Initializable {
 
     txt_msg.setFill(Color.FIREBRICK);
     txt_msg.setText("Saving -- sub: " + subject + ", rel: " + relationship + ", obj: " + object);
-    _db.addData(subject, relationship, object);
+    _db.createFact(subject, relationship, object);
+
     var fact = new Fact(subject, relationship, object);
+
     lv_facts.getItems().add(new FactItemView(fact, lv_facts, _db));
-    //    lv_facts.getItems().add(new Fact(subject, relationship, object));
+    _relationships.add(relationship);
+    _entities.addAll(Set.of(subject, object));
+    bindAutoCompleteFields();
   }
 
   /**
    * filter action for the list view
    */
   public void filter_action() {
-    //    var selection = lv_facts.getSelectionModel().getSelectedItem();
     var filter = _filter.getText();
     Set<Fact> data;
     if (filter.equals("")) {
-      data = _db.readAll();
+      data = _db.readAllFacts();
 
     } else {
-      data = _db.readData(filter);
+      data = _db.readRelatedFacts(filter);
     }
 
     lv_facts.getItems().clear();
     List<FactItemView> layouts =
       data.stream().map(it -> new FactItemView(it, lv_facts, _db)).collect(Collectors.toList());
     lv_facts.getItems().addAll(layouts);
-    //    lv_facts.getItems().addAll(data);
   }
 
+  /**
+   * loaded action for the controller overall
+   */
   public void loaded_action() {
     List<FactItemView> layouts =
-      _db.readAll().stream().map(it -> new FactItemView(it, lv_facts, _db))
+      _db.readAllFacts().stream().map(it -> new FactItemView(it, lv_facts, _db))
         .collect(Collectors.toList());
     lv_facts.getItems().addAll(layouts);
-    //    lv_facts.getItems().addAll(_db.readAll());
+
+    _entities = _db.readAllEntities();
+    _relationships = _db.readAllRelationships();
+
+    bindAutoCompleteFields();
+  }
+
+  /**
+   * binds the autocompletion values to their corresponding text fields
+   */
+  private void bindAutoCompleteFields() {
+    TextFields.bindAutoCompletion(_subject, _entities);
+    TextFields.bindAutoCompletion(_object, _entities);
+    TextFields.bindAutoCompletion(_filter, _entities);
+    TextFields.bindAutoCompletion(_relationship, _relationships);
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
