@@ -3,62 +3,47 @@ package savvy.ui.app;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import org.controlsfx.control.textfield.TextFields;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import savvy.core.EmbeddedNeo4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import savvy.core.Fact;
-import savvy.ui.FactItemView;
-import savvy.ui.fact_create.FactCreateEV;
+import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.events.DoFactCreate;
+import savvy.core.events.DoFactDelete;
+import savvy.core.events.DoFactUpdate;
+import savvy.core.events.RelatedFactsRead;
+import savvy.ui.facts_filter_list.FilterSubmitted;
 
 import java.net.URL;
-import java.util.List;
+import java.util.HashMap;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Controller for the application's main window
  */
 public class AppController implements Initializable {
   public static AppController instance;
+  private final Logger log = LoggerFactory.getLogger(this.getClass());
   private final Set<String> _entities;
   private final Set<String> _relationships;
-  public HBox idFactCreate;
+  @FXML private HBox idFactCreate;
+  @FXML private Pane idFactsFilterList;
   private EmbeddedNeo4j _db;
 
-  @FXML private TextField _filter;
   @FXML private Text txt_msg;
-  @FXML private ListView<FactItemView> lv_facts;
+
 
   public AppController() {
     instance = this;
     _entities = FXCollections.observableSet();
     _relationships = FXCollections.observableSet();
-  }
-
-  @Subscribe(threadMode = ThreadMode.MAIN) public void onFactCreate(FactCreateEV ev) {
-    var fact = ev.fact;
-    txt_msg.setFill(Color.FIREBRICK);
-    txt_msg.setText("Saving fact: " + fact);
-    _db.createFact(fact);
-    lv_facts.getItems().add(new FactItemView(fact, lv_facts, _db));
-
-    _relationships.add(fact.getRelationship());
-
-    _entities.addAll(Set.of(fact.getSubject(), fact.getObject()));
-    EventBus.getDefault().post(new EntitiesUpdateEV(_entities));
-
-  }
-
-  @Subscribe(threadMode = ThreadMode.MAIN) public void onEntitiesUpdate(EntitiesUpdateEV ev) {
-    TextFields.bindAutoCompletion(_filter, _entities);
   }
 
   /**
@@ -72,22 +57,23 @@ public class AppController implements Initializable {
   }
 
   /**
-   * filter action for the list view
+   * loads a comprehensive collection (set) of entities for embedded views to use
    */
-  public void filter_action() {
-    var filter = _filter.getText();
-    Set<Fact> data;
-    if (filter.equals("")) {
-      data = _db.readAllFacts();
+  private void loadEntities() {
+    // populate entities (triggers value changes)
+    _entities.clear();
+    _entities.addAll(_db.readAllEntities());
+    EventBus.getDefault().post(new EntitiesUpdated(_entities));
+  }
 
-    } else {
-      data = _db.readRelatedFacts(filter);
-    }
-
-    lv_facts.getItems().clear();
-    List<FactItemView> layouts =
-      data.stream().map(it -> new FactItemView(it, lv_facts, _db)).collect(Collectors.toList());
-    lv_facts.getItems().addAll(layouts);
+  /**
+   * loads a comprehensive collection (set) of relationships for embedded views to use
+   */
+  private void loadRelationships() {
+    // populate relationships (triggers value changes)
+    _relationships.clear();
+    _relationships.addAll(_db.readAllRelationships());
+    EventBus.getDefault().post(new RelationshipsUpdated(_relationships));
   }
 
   /**
@@ -97,21 +83,77 @@ public class AppController implements Initializable {
     // register with event bus
     EventBus.getDefault().register(this);
 
-    List<FactItemView> layouts =
-      _db.readAllFacts().stream().map(it -> new FactItemView(it, lv_facts, _db))
-        .collect(Collectors.toList());
-    lv_facts.getItems().addAll(layouts);
-
-    // populate entities, relationships (triggers value changes)
-    _entities.addAll(_db.readAllEntities());
-    EventBus.getDefault().post(new EntitiesUpdateEV(_entities));
-
-    _relationships.addAll(_db.readAllRelationships());
-    EventBus.getDefault().post(new RelationshipsUpdateEV(_relationships));
+    loadEntities();
+    loadRelationships();
+    EventBus.getDefault().post(new FilterSubmitted(""));
 
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
 
   }
+
+
+  //=== event listeners =========================================================================\\
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactCreate ev) {
+    var fact = ev.fact;
+    txt_msg.setFill(Color.FIREBRICK);
+    txt_msg.setText("Saving fact: " + fact);
+    _db.createFact(fact);
+
+    _relationships.add(fact.getRelationship());
+
+    _entities.addAll(Set.of(fact.getSubject(), fact.getObject()));
+    EventBus.getDefault().post(new EntitiesUpdated(_entities));
+
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactUpdate ev) {
+    var previous = ev.previous;
+    var current = ev.current;
+    _db.deleteFact(previous);
+    _db.createFact(current);
+
+    // relationship change -> event
+    if (!previous.getRelationship().equals(current.getRelationship())) {
+      loadRelationships();
+    }
+
+    // entity change -> event
+    var changes = new HashMap<String, String>();
+    if (!previous.getSubject().equals(current.getSubject())) {
+      changes.put(previous.getSubject(), current.getSubject());
+    }
+
+    if (!previous.getObject().equals(current.getObject())) {
+      changes.put(previous.getObject(), current.getObject());
+    }
+
+    changes.forEach((p, c) -> {
+      _entities.remove(p);
+      _entities.add(c);
+    });
+
+    if (changes.size() > 0) {
+      loadEntities();
+    }
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactDelete ev) {
+    _db.deleteFact(ev.fact);
+    loadEntities();
+    loadRelationships();
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FilterSubmitted ev) {
+    Set<Fact> facts;
+    if (ev.filter.equals("")) {
+      facts = _db.readAllFacts();
+    } else {
+      facts = _db.readRelatedFacts(ev.filter);
+    }
+    EventBus.getDefault().post(new RelatedFactsRead(facts, _db));
+  }
+
+
 }

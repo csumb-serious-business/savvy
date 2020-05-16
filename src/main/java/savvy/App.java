@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.EmbeddedNeo4j;
+import savvy.core.db.EmbeddedNeo4j;
 import savvy.ui.app.AppController;
 
 import java.io.IOException;

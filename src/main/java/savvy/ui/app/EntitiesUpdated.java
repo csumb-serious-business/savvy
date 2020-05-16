@@ -5,11 +5,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-public final class EntitiesUpdateEV {
+/**
+ * fired upon app's entities collection (set) update
+ */
+public final class EntitiesUpdated {
   public final Set<String> entities;
   private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-  public EntitiesUpdateEV(Set<String> entities) {
+  public EntitiesUpdated(Set<String> entities) {
     log.info("entities: {}", entities.size());
     this.entities = entities;
   }
