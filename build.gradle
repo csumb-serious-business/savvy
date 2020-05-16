@@ -42,22 +42,16 @@ dependencies {
     /// controlsfx -- UI controls
     implementation 'org.controlsfx:controlsfx:11.0.1'
 
-    // NOTE: the latest version _is_ 8.0.1!
-    // 8.0.7 was published by mistake
-    compile 'io.datafx:datafx:8.0.1'
-    compile 'io.datafx:flow:8.0.1'
-
-    // FontAwesome
-    // Versions higher than 2.x are for Java 11
-    compile 'org.kordamp.ikonli:ikonli-javafx:2.4.0'
-    compile 'org.kordamp.ikonli:ikonli-fontawesome5-pack:2.4.0'
-
-
     /// neo4j -- DB
     implementation 'org.neo4j:neo4j:4.0.3'
 
+    /// event bus
+    implementation 'org.greenrobot:eventbus:3.2.0'
+
     /// slf4j -- logging
     implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+
 
     /// JUnit Jupiter -- testing
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'

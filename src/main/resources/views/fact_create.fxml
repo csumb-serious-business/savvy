@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.Region?>
 <HBox xmlns:fx="http://javafx.com/fxml"
       xmlns="http://javafx.com/javafx"
-      fx:controller="savvy.ui.controllers.FactCreate"
+      fx:controller="savvy.ui.fact_create.FactCreateController"
       spacing="10"
 >
     <!-- 3 fields for sub, rel & obj -->

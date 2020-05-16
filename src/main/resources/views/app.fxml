@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Text?>
 <GridPane xmlns:fx="http://javafx.com/fxml"
           xmlns="http://javafx.com/javafx"
-          fx:controller="savvy.AppController"
+          fx:controller="savvy.ui.app.AppController"
           prefHeight="400.0" prefWidth="800.0"
           alignment="center"
           hgap="10"
@@ -24,18 +24,10 @@
         <Insets top="25" right="25" bottom="25" left="25"/>
     </padding>
 
-    <HBox spacing="10"
-          GridPane.rowIndex="0"
-          GridPane.columnIndex="0"
-    >
-        <!-- 3 fields for sub, rel & obj -->
-        <TextField fx:id="_subject"/>
-        <TextField fx:id="_relationship"/>
-        <TextField fx:id="_object"/>
-        <!-- save button -->
-        <Region HBox.hgrow="SOMETIMES"/>
-        <Button onAction="#save_action">Save</Button>
-    </HBox>
+    <fx:include fx:id="idFactCreate" source="fact_create.fxml"
+                GridPane.columnIndex="0"
+                GridPane.rowIndex="0"
+    />
 
     <Separator
             GridPane.rowIndex="1"
