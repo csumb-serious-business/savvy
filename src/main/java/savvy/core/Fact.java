@@ -2,6 +2,9 @@ package savvy.core;
 
 import java.util.Objects;
 
+/**
+ * represents a Fact that relates a particular subject entity with an object entity
+ */
 public class Fact implements Comparable<Fact> {
   private final String subject;
   private final String relationship;

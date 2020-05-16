@@ -1,4 +1,4 @@
-package savvy.ui;
+package savvy.ui.facts_filter_list;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -7,27 +7,34 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import savvy.core.EmbeddedNeo4j;
+import org.greenrobot.eventbus.EventBus;
 import savvy.core.Fact;
+import savvy.core.events.DoFactDelete;
+import savvy.core.events.DoFactUpdate;
 
+/**
+ * controller and layout for an individual Fact Item in the FactsFilterList
+ */
 public class FactItemView extends HBox {
   private final ListView<FactItemView> _parent;
-  private final EmbeddedNeo4j _db;
   private Fact _fact;
 
-  public FactItemView(Fact fact, ListView<FactItemView> parent, EmbeddedNeo4j db) {
+  public FactItemView(Fact fact, ListView<FactItemView> parent) {
     super();
 
     this.setSpacing(10);
 
     this._fact = fact;
     this._parent = parent;
-    this._db = db;
 
     viewMode();
 
   }
 
+
+  /**
+   * creates & wires the layout for this item's view mode
+   */
   private void viewMode() {
     var label = new Label();
     label.setText(_fact.toString());
@@ -39,7 +46,7 @@ public class FactItemView extends HBox {
     btn_delete.setText("Delete");
 
     btn_delete.setOnAction(ev -> {
-      _db.deleteFact(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
+      EventBus.getDefault().post(new DoFactDelete(_fact));
       _parent.getItems().remove(this);
     });
 
@@ -50,9 +57,12 @@ public class FactItemView extends HBox {
     this.getChildren().addAll(label, gap, btn_edit, btn_delete);
   }
 
+  /**
+   * creates & wires the layout for this item's edit mode
+   */
   private void editMode() {
 
-    final double width = this.widthProperty().doubleValue()/5.0d;
+    final double width = this.widthProperty().doubleValue() / 5.0d;
 
     var subject = new TextField();
     subject.setText(_fact.getSubject());
@@ -77,10 +87,16 @@ public class FactItemView extends HBox {
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
-      // remove the previous fact data
-      _db.deleteFact(_fact.getSubject(), _fact.getRelationship(), _fact.getObject());
-      // add the updated version
-      _db.createFact(subject.getText(), relationship.getText(), object.getText());
+      // go straight to view-mode if no change
+      var fact = new Fact(subject.getText(), relationship.getText(), object.getText());
+
+      if (this._fact.equals(fact)) {
+        this.viewMode();
+        return;
+      }
+
+      // update the fact data
+      EventBus.getDefault().post(new DoFactUpdate(_fact, fact));
 
       // update the underlying fact
       this._fact = new Fact(subject.getText(), relationship.getText(), object.getText());
@@ -92,5 +108,4 @@ public class FactItemView extends HBox {
     this.getChildren().addAll(subject, relationship, object, gap, btn_cancel, btn_save);
 
   }
-
 }

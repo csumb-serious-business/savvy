@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<HBox xmlns:fx="http://javafx.com/fxml"
+      xmlns="http://javafx.com/javafx"
+      fx:controller="savvy.ui.fact_create.FactCreateController"
+      spacing="10"
+>
+    <!-- 3 fields for sub, rel & obj -->
+    <TextField fx:id="_subject"/>
+    <TextField fx:id="_relationship"/>
+    <TextField fx:id="_object"/>
+    <!-- save button -->
+    <Region HBox.hgrow="SOMETIMES"/>
+    <Button onAction="#save_action">Save</Button>
+</HBox>

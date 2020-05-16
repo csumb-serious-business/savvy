@@ -1,13 +1,16 @@
 package savvy;
 
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.greenrobot.eventbus.EventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.EmbeddedNeo4j;
+import savvy.core.db.EmbeddedNeo4j;
+import savvy.ui.app.AppController;
 
 import java.io.IOException;
 
@@ -16,6 +19,9 @@ import java.io.IOException;
  */
 public class App extends Application {
   private static final EmbeddedNeo4j _db = new EmbeddedNeo4j();
+  private static final EventBus events = new EventBus();
+
+
 
   private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -32,7 +38,7 @@ public class App extends Application {
     }
 
     // load the FXML
-    var loader = new FXMLLoader(getClass().getClassLoader().getResource("views/App.fxml"));
+    var loader = new FXMLLoader(getClass().getClassLoader().getResource("views/app.fxml"));
     Parent root = loader.load();
 
     // inject the db

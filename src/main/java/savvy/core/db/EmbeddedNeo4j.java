@@ -1,4 +1,4 @@
-package savvy.core;
+package savvy.core.db;
 
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
@@ -13,6 +13,7 @@ import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.Fact;
 
 import java.io.File;
 import java.io.IOException;
@@ -152,6 +153,10 @@ public class EmbeddedNeo4j {
 
   }
 
+  public void createFact(Fact fact) {
+    createFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
+  }
+
   /**
    * remove a fact from the database
    * note: if an entity has no remaining facts, it will be removed
@@ -180,6 +185,10 @@ public class EmbeddedNeo4j {
 
       tx.commit();
     }
+  }
+
+  public void deleteFact(Fact fact) {
+    deleteFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
   }
 
 
@@ -294,7 +303,10 @@ public class EmbeddedNeo4j {
    */
   public Set<String> readAllRelationships() {
     var relationships = new TreeSet<String>();
-    readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
+    readAllFacts().forEach(f -> {
+      relationships.add(f.getRelationship());
+      //      log.info("f: {}", f);
+    });
     return relationships;
   }
 
