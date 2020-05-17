@@ -1,9 +1,7 @@
-package savvy.core.events;
+package savvy.core.fact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.db.EmbeddedNeo4j;
-import savvy.core.fact.Fact;
 
 import java.util.Set;
 
@@ -12,12 +10,10 @@ import java.util.Set;
  */
 public final class RelatedFactsRead {
   public final Set<Fact> facts;
-  public final EmbeddedNeo4j db;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public RelatedFactsRead(Set<Fact> facts, EmbeddedNeo4j db) {
+  public RelatedFactsRead(Set<Fact> facts) {
     log.info("facts: {}", facts.size());
     this.facts = facts;
-    this.db = db;
   }
 }

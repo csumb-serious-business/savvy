@@ -10,8 +10,8 @@ import javafx.scene.layout.Region;
 import org.greenrobot.eventbus.EventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.events.DoFactDelete;
-import savvy.core.events.DoFactUpdate;
+import savvy.core.fact.DoFactDelete;
+import savvy.core.fact.DoFactUpdate;
 import savvy.core.fact.Fact;
 
 /**

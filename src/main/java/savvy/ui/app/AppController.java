@@ -4,7 +4,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -13,18 +12,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.Entities;
-import savvy.core.events.DoFactCreate;
-import savvy.core.events.DoFactDelete;
-import savvy.core.events.DoFactUpdate;
-import savvy.core.events.RelatedFactsRead;
-import savvy.core.fact.Fact;
+import savvy.core.fact.DoRelatedFactsRead;
+import savvy.core.fact.FactCreated;
+import savvy.core.fact.FactDeleted;
+import savvy.core.fact.FactUpdated;
+import savvy.core.fact.Facts;
 import savvy.core.relationship.Relationships;
 import savvy.ui.facts_filter_list.FilterSubmitted;
 
 import java.net.URL;
-import java.util.HashMap;
 import java.util.ResourceBundle;
-import java.util.Set;
 
 /**
  * Controller for the application's main window
@@ -35,6 +32,7 @@ public class AppController implements Initializable {
 
   private final Entities _entities;
   private final Relationships _relationships;
+  private final Facts _facts;
 
   @FXML private HBox idFactCreate;
   @FXML private Pane idFactsFilterList;
@@ -45,6 +43,7 @@ public class AppController implements Initializable {
 
   public AppController() {
     instance = this;
+    _facts = new Facts();
     _entities = new Entities();
     _relationships = new Relationships();
   }
@@ -66,6 +65,7 @@ public class AppController implements Initializable {
     // register with event bus
     EventBus.getDefault().register(this);
 
+    _facts.init(_db);
     _entities.init(_db);
     _relationships.init(_db);
 
@@ -80,58 +80,23 @@ public class AppController implements Initializable {
 
 
   //=== event listeners =========================================================================\\
-  // fact create -> message + relationship & entities update
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactCreate ev) {
-    var fact = ev.fact;
-    txt_msg.setFill(Color.FIREBRICK);
-    txt_msg.setText("Saving fact: " + fact);
-    _db.createFact(fact);
-
-    _relationships.add(fact.getRelationship());
-    _entities.addAll(fact.getEntities());
-
+  // fact create -> message
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
+    txt_msg.setText("Saved fact: " + ev.fact);
   }
 
-  // fact update -> relationhsip & entities update
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactUpdate ev) {
-    var previous = ev.previous;
-    var current = ev.current;
-    _db.deleteFact(previous);
-    _db.createFact(current);
-
-    // relationship change -> event
-    if (!previous.getRelationship().equals(current.getRelationship())) {
-      _relationships.update(previous.getRelationship(), current.getRelationship());
-    }
-
-    // entity change -> event
-    var changes = new HashMap<String, String>();
-    if (!previous.getSubject().equals(current.getSubject())) {
-      changes.put(previous.getSubject(), current.getSubject());
-    }
-
-    if (!previous.getObject().equals(current.getObject())) {
-      changes.put(previous.getObject(), current.getObject());
-    }
-
-    changes.forEach(_entities::update);
+  // fact update -> message
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
+    txt_msg.setText("Updated fact: " + ev.previous + " -> " + ev.current);
   }
 
-  // fact delete -> entities & relationships update
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactDelete ev) {
-    _db.deleteFact(ev.fact);
-    _entities.refresh();
-    _relationships.refresh();
+  // fact delete -> message
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+    txt_msg.setText("Deleted fact: " + ev.fact);
   }
 
-  // filter submit -> read related facts
+  // filter submit -> dispatch DoRelatedFactsRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FilterSubmitted ev) {
-    Set<Fact> facts;
-    if (ev.filter.equals("")) {
-      facts = _db.readAllFacts();
-    } else {
-      facts = _db.readRelatedFacts(ev.filter);
-    }
-    EventBus.getDefault().post(new RelatedFactsRead(facts, _db));
+    EventBus.getDefault().post(new DoRelatedFactsRead(ev.filter));
   }
 }

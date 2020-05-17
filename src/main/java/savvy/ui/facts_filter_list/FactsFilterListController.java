@@ -12,8 +12,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.EntitiesNamesUpdated;
-import savvy.core.events.DoFactCreate;
-import savvy.core.events.RelatedFactsRead;
+import savvy.core.fact.DoFactCreate;
+import savvy.core.fact.RelatedFactsRead;
 
 import java.net.URL;
 import java.util.List;

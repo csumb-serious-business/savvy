@@ -1,9 +1,14 @@
 package savvy.core.relationship;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.fact.FactCreated;
+import savvy.core.fact.FactDeleted;
+import savvy.core.fact.FactUpdated;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * models a group of relationships
+ */
 public class Relationships {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -27,24 +35,45 @@ public class Relationships {
     _correlates = new HashMap<>();
   }
 
+  /**
+   * @return a sorted list of names among all relationships
+   */
   public List<String> getNames() {
     return _names.stream().sorted().collect(Collectors.toList());
   }
 
+  /**
+   * fires a names updated notification for listeners
+   */
   private void notifyNamesUpdated() {
     EventBus.getDefault().post(new RelationshipsNamesUpdated(getNames()));
   }
 
 
+  /**
+   * iniltializes this with a given db
+   *
+   * @param db the db to use
+   */
   public void init(EmbeddedNeo4j db) {
     _db = db;
+
+    // register with event bus
+    EventBus.getDefault().register(this);
+
     var relationships = _db.readAllRelationships();
 
     // todo this is a stop-gap for full-fledged relationships
     _names.addAll(relationships);
     notifyNamesUpdated();
+
   }
 
+  /**
+   * clears and reloads the data in this Entities
+   * on some updates, it is impossible to predict the change
+   * in the db, instead of guessing, we reload everything
+   */
   public void refresh() {
     _items.clear();
     _names.clear();
@@ -54,8 +83,14 @@ public class Relationships {
     notifyNamesUpdated();
   }
 
-  // todo -- stop-gap
+
+  /**
+   * adds a relationship by name
+   *
+   * @param name the relationship's name
+   */
   public void add(String name) {
+    // todo -- stop-gap
     if (_names.contains(name)) {
       return;
     }
@@ -63,8 +98,16 @@ public class Relationships {
     notifyNamesUpdated();
   }
 
-  // todo -- stop-gap
+
+
+  /**
+   * updates an relationship, given a previous name and a current name
+   *
+   * @param previous the relationship name to change from
+   * @param current  the relationship name to change to
+   */
   public void update(String previous, String current) {
+    // todo -- stop-gap
     var changed = false;
     if (_names.contains(previous)) {
       _names.remove(previous);
@@ -79,6 +122,23 @@ public class Relationships {
     if (changed) {
       notifyNamesUpdated();
     }
-
   }
+
+  //=== event listeners =========================================================================\\
+  // fact created -> add
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
+    add(ev.fact.getRelationship());
+  }
+
+  // fact updated -> update
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
+    update(ev.previous.getRelationship(), ev.current.getRelationship());
+  }
+
+  // fact deleted -> refresh
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+    refresh();
+  }
+
+
 }

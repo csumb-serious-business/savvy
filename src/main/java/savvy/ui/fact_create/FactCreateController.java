@@ -11,7 +11,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.EntitiesNamesUpdated;
-import savvy.core.events.DoFactCreate;
+import savvy.core.fact.DoFactCreate;
 import savvy.core.fact.Fact;
 import savvy.core.relationship.RelationshipsNamesUpdated;
 

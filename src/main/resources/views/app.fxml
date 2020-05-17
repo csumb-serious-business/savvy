@@ -46,7 +46,8 @@
           GridPane.rowIndex="4"
           GridPane.columnIndex="0"
     >
-        <Text fx:id="txt_msg"/>
+        <Text fx:id="txt_msg"
+              fill="firebrick"/>
     </VBox>
 
 </GridPane>

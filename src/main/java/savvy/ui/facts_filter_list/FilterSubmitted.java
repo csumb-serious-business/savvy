@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
  */
 public final class FilterSubmitted {
   public final String filter;
-  private final Logger log = LoggerFactory.getLogger(this.getClass());
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   public FilterSubmitted(String filter) {
-    log.info("fact: \"{}\"", filter);
+    log.info("fact name: \"{}\"", filter);
     this.filter = filter;
   }
 }

@@ -1,17 +1,16 @@
-package savvy.core.events;
+package savvy.core.fact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.fact.Fact;
 
 /**
- * fired to initiate Fact deletion in the DB
+ * fired upon deletion of fact in the DB
  */
-public final class DoFactDelete {
+public final class FactDeleted {
   public final Fact fact;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public DoFactDelete(Fact fact) {
+  public FactDeleted(Fact fact) {
     log.info("fact: {}", fact);
     this.fact = fact;
   }

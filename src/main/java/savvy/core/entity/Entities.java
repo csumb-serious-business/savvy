@@ -1,11 +1,17 @@
 package savvy.core.entity;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.fact.FactCreated;
+import savvy.core.fact.FactDeleted;
+import savvy.core.fact.FactUpdated;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,6 +68,10 @@ public class Entities {
    */
   public void init(EmbeddedNeo4j db) {
     _db = db;
+
+    // register with event bus
+    EventBus.getDefault().register(this);
+
     var entities = _db.readAllEntities();
 
     // todo this is a stop-gap for full-fledged entities
@@ -71,7 +81,7 @@ public class Entities {
 
   /**
    * clears and reloads the data in this Entities
-   * on data some updates, it is impossible to predict the change
+   * on some updates, it is impossible to predict the change
    * in the db, instead of guessing, we reload everything
    */
   public void refresh() {
@@ -142,6 +152,35 @@ public class Entities {
     if (changed) {
       notifyNamesUpdated();
     }
+  }
+
+  //=== event listeners =========================================================================\\
+  // fact create -> addAll
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
+    addAll(ev.fact.getEntities());
+  }
+
+  // fact update -> update
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
+    var previous = ev.previous;
+    var current = ev.current;
+
+    // entity change -> event
+    var changes = new HashMap<String, String>();
+    if (!previous.getSubject().equals(current.getSubject())) {
+      changes.put(previous.getSubject(), current.getSubject());
+    }
+
+    if (!previous.getObject().equals(current.getObject())) {
+      changes.put(previous.getObject(), current.getObject());
+    }
+
+    changes.forEach(this::update);
+  }
+
+  // fact deleted -> refresh
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+    refresh();
   }
 
 
