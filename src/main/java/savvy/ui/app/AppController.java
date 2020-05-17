@@ -2,8 +2,6 @@ package savvy.ui.app;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -12,13 +10,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.Entities;
-import savvy.core.fact.DoRelatedFactsRead;
-import savvy.core.fact.FactCreated;
-import savvy.core.fact.FactDeleted;
-import savvy.core.fact.FactUpdated;
 import savvy.core.fact.Facts;
+import savvy.core.fact.events.DoFactsRead;
+import savvy.core.fact.events.FactCreated;
+import savvy.core.fact.events.FactDeleted;
+import savvy.core.fact.events.FactUpdated;
 import savvy.core.relationship.Relationships;
-import savvy.ui.facts_filter_list.FilterSubmitted;
+import savvy.core.relationship.events.DoRelationshipsRead;
+import savvy.ui.facts_list.FactsFilterAction;
+import savvy.ui.relationshps_list.RelationshipsFilterAction;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -34,8 +34,6 @@ public class AppController implements Initializable {
   private final Relationships _relationships;
   private final Facts _facts;
 
-  @FXML private HBox idFactCreate;
-  @FXML private Pane idFactsFilterList;
   private EmbeddedNeo4j _db;
 
   @FXML private Text txt_msg;
@@ -70,7 +68,8 @@ public class AppController implements Initializable {
     _relationships.init(_db);
 
     // manually populate the filter
-    EventBus.getDefault().post(new FilterSubmitted(""));
+    EventBus.getDefault().post(new FactsFilterAction(""));
+    EventBus.getDefault().post(new RelationshipsFilterAction(""));
 
   }
 
@@ -95,8 +94,14 @@ public class AppController implements Initializable {
     txt_msg.setText("Deleted fact: " + ev.fact);
   }
 
-  // filter submitted -> dispatch DoRelatedFactsRead
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FilterSubmitted ev) {
-    EventBus.getDefault().post(new DoRelatedFactsRead(ev.filter));
+  // facts filter submitted -> dispatch DoRelatedFactsRead
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsFilterAction ev) {
+    EventBus.getDefault().post(new DoFactsRead(ev.filter));
   }
+
+  // relationships filter submitted -> dispatch DoRelationshipsRead
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsFilterAction ev) {
+    EventBus.getDefault().post(new DoRelationshipsRead(ev.filter));
+  }
+
 }

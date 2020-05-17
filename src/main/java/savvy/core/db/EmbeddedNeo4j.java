@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -308,6 +309,24 @@ public class EmbeddedNeo4j {
       //      log.info("f: {}", f);
     });
     return relationships;
+  }
+
+
+  /**
+   * Traverse the graph collecting all relationships
+   * that match a given name and return a relationship for each
+   *
+   * @param filter the name of the entity to lookup
+   * @return a set of Facts corresponding to the relationships
+   * found in the traversal
+   */
+  public Set<String> readMatchingRelationships(String filter) {
+
+    // from a list of all facts
+    // get those that contain a relationship name matching the filter
+    // and add them the the set
+    return readAllFacts().stream().filter(f -> f.getRelationship().toLowerCase().contains(filter))
+      .map(Fact::getRelationship).collect(Collectors.toSet());
   }
 
   // describes the types of relationships within the database

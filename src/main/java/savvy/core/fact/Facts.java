@@ -6,6 +6,14 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.fact.events.DoFactCreate;
+import savvy.core.fact.events.DoFactDelete;
+import savvy.core.fact.events.DoFactUpdate;
+import savvy.core.fact.events.DoFactsRead;
+import savvy.core.fact.events.FactCreated;
+import savvy.core.fact.events.FactDeleted;
+import savvy.core.fact.events.FactUpdated;
+import savvy.core.fact.events.FactsRead;
 
 import java.util.Set;
 
@@ -28,6 +36,7 @@ public class Facts {
   }
 
   //=== event listeners =========================================================================\\
+
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactCreate ev) {
     var fact = ev.fact;
     _db.createFact(fact);
@@ -49,16 +58,15 @@ public class Facts {
     EventBus.getDefault().post(new FactDeleted(fact));
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelatedFactsRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactsRead ev) {
     Set<Fact> facts;
-    var name = ev.name;
-    if (ev.name.equals("")) {
+    if (ev.filter.equals("")) {
       facts = _db.readAllFacts();
     } else {
-      facts = _db.readRelatedFacts(ev.name);
+      facts = _db.readRelatedFacts(ev.filter);
     }
 
-    EventBus.getDefault().post(new RelatedFactsRead(facts));
+    EventBus.getDefault().post(new FactsRead(facts));
   }
 
 }

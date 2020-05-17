@@ -6,9 +6,9 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
-import savvy.core.fact.FactCreated;
-import savvy.core.fact.FactDeleted;
-import savvy.core.fact.FactUpdated;
+import savvy.core.fact.events.FactCreated;
+import savvy.core.fact.events.FactDeleted;
+import savvy.core.fact.events.FactUpdated;
 
 import java.util.Collection;
 import java.util.HashMap;

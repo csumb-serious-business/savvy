@@ -1,4 +1,4 @@
-package savvy.core.fact;
+package savvy.core.fact.events;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,12 +6,12 @@ import org.slf4j.LoggerFactory;
 /**
  * fired to initiate reading related Facts from the DB
  */
-public final class DoRelatedFactsRead {
-  public final String name;
+public final class DoFactsRead {
+  public final String filter;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public DoRelatedFactsRead(String name) {
-    log.info("name: \"{}\"", name);
-    this.name = name;
+  public DoFactsRead(String filter) {
+    log.info("filter: \"{}\"", filter);
+    this.filter = filter;
   }
 }

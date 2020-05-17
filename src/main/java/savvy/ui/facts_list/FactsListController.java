@@ -1,4 +1,4 @@
-package savvy.ui.facts_filter_list;
+package savvy.ui.facts_list;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -12,8 +12,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.EntitiesNamesUpdated;
-import savvy.core.fact.FactCreated;
-import savvy.core.fact.RelatedFactsRead;
+import savvy.core.fact.events.FactCreated;
+import savvy.core.fact.events.FactsRead;
 
 import java.net.URL;
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Controller for the Fact Item list and filter
  */
-public class FactsFilterListController implements Initializable {
+public class FactsListController implements Initializable {
 
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
   @FXML private ListView<FactItemView> lv_facts;
@@ -34,11 +34,9 @@ public class FactsFilterListController implements Initializable {
    * filters the facts list view
    */
   public void filter_action() {
-    log.info("filter facts list: {}", "");
-
     var filter = _filter.getText();
-    EventBus.getDefault().post(new FilterSubmitted(filter));
-
+    log.info("filter facts list: {}", filter);
+    EventBus.getDefault().post(new FactsFilterAction(filter));
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
@@ -49,7 +47,7 @@ public class FactsFilterListController implements Initializable {
   //=== event listeners =========================================================================\\
 
   // related facts read -> populate facts list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelatedFactsRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsRead ev) {
     lv_facts.getItems().clear();
     List<FactItemView> layouts =
       ev.facts.stream().map(it -> new FactItemView(it, lv_facts)).collect(Collectors.toList());
@@ -60,6 +58,7 @@ public class FactsFilterListController implements Initializable {
 
   // entities names updated -> autocomplete list
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
+    // dispose old autocomplete binding if it exists
     if (_fb != null) {
       _fb.dispose();
     }

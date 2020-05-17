@@ -6,9 +6,12 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
-import savvy.core.fact.FactCreated;
-import savvy.core.fact.FactDeleted;
-import savvy.core.fact.FactUpdated;
+import savvy.core.fact.events.FactCreated;
+import savvy.core.fact.events.FactDeleted;
+import savvy.core.fact.events.FactUpdated;
+import savvy.core.relationship.events.DoRelationshipsRead;
+import savvy.core.relationship.events.RelationshipsNamesUpdated;
+import savvy.core.relationship.events.RelationshipsRead;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +52,6 @@ public class Relationships {
     EventBus.getDefault().post(new RelationshipsNamesUpdated(getNames()));
   }
 
-
   /**
    * iniltializes this with a given db
    *
@@ -83,7 +85,6 @@ public class Relationships {
     notifyNamesUpdated();
   }
 
-
   /**
    * adds a relationship by name
    *
@@ -97,8 +98,6 @@ public class Relationships {
     _names.add(name);
     notifyNamesUpdated();
   }
-
-
 
   /**
    * updates an relationship, given a previous name and a current name
@@ -125,6 +124,25 @@ public class Relationships {
   }
 
   //=== event listeners =========================================================================\\
+
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipsRead ev) {
+    Set<String> relNames;
+
+    if (ev.filter.equals("")) {
+      relNames = _db.readAllRelationships();
+    } else {
+      relNames = _db.readMatchingRelationships(ev.filter);
+    }
+
+    _items.clear();
+    var toAdd =
+      relNames.stream().map(n -> new Relationship(n, Set.of())).collect(Collectors.toSet());
+    _items.addAll(toAdd);
+
+    EventBus.getDefault().post(new RelationshipsRead(_items));
+  }
+
   // fact created -> add
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
     add(ev.fact.getRelationship());

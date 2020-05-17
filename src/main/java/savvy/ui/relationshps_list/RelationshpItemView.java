@@ -1,4 +1,4 @@
-package savvy.ui.facts_filter_list;
+package savvy.ui.relationshps_list;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -10,25 +10,28 @@ import javafx.scene.layout.Region;
 import org.greenrobot.eventbus.EventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.fact.DoFactDelete;
-import savvy.core.fact.DoFactUpdate;
-import savvy.core.fact.Fact;
+import savvy.core.relationship.Correlate;
+import savvy.core.relationship.Relationship;
+import savvy.core.relationship.events.DoRelationshipUpdate;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * controller and layout for an individual Fact Item in the FactsFilterList
  */
-public class FactItemView extends HBox {
+public class RelationshpItemView extends HBox {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  private final ListView<FactItemView> _parent;
-  private Fact _fact;
+  private final ListView<RelationshpItemView> _parent;
+  private Relationship _relationship;
 
-  public FactItemView(Fact fact, ListView<FactItemView> parent) {
+  public RelationshpItemView(Relationship relationship, ListView<RelationshpItemView> parent) {
     super();
 
     this.setSpacing(10);
 
-    this._fact = fact;
+    this._relationship = relationship;
     this._parent = parent;
 
     viewMode();
@@ -41,24 +44,21 @@ public class FactItemView extends HBox {
    */
   private void viewMode() {
     var label = new Label();
-    label.setText(_fact.toString());
+    label.setText(_relationship.toString());
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
 
-    var btn_delete = new Button();
-    btn_delete.setText("Delete");
-
-    btn_delete.setOnAction(ev -> {
-      EventBus.getDefault().post(new DoFactDelete(_fact));
-      _parent.getItems().remove(this);
-    });
+    // no deletion, since that would cascade all facts.
+    // (causing possibly unexpected consequences)
+    // instead when all related facts have on reference to
+    // a relationship it is removed
 
     var btn_edit = new Button();
     btn_edit.setText("Edit");
     btn_edit.setOnAction(ev -> this.editMode());
     this.getChildren().clear();
-    this.getChildren().addAll(label, gap, btn_edit, btn_delete);
+    this.getChildren().addAll(label, gap, btn_edit);
   }
 
   /**
@@ -68,17 +68,16 @@ public class FactItemView extends HBox {
 
     final double width = this.widthProperty().doubleValue() / 5.0d;
 
-    var subject = new TextField();
-    subject.setText(_fact.getSubject());
-    subject.setMaxWidth(width);
+    var name = new TextField();
+    name.setText(_relationship.getName());
+    name.setMaxWidth(width);
 
-    var relationship = new TextField();
-    relationship.setText(_fact.getRelationship());
-    relationship.setMaxWidth(width);
+    var correlates = new TextField();
 
-    var object = new TextField();
-    object.setText(_fact.getObject());
-    object.setMaxWidth(width);
+    var cStr = _relationship.getCorrelates().stream().map(Correlate::toString)
+      .collect(Collectors.joining(" "));
+    correlates.setText(cStr);
+    correlates.setMaxWidth(width);
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -92,24 +91,24 @@ public class FactItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
       // go straight to view-mode if no change
-      var fact = new Fact(subject.getText(), relationship.getText(), object.getText());
+      var relationship = new Relationship(name.getText(), Set.of());
 
-      if (this._fact.equals(fact)) {
+      if (_relationship.equals(relationship)) {
         this.viewMode();
         return;
       }
 
-      // update the fact data
-      EventBus.getDefault().post(new DoFactUpdate(_fact, fact));
+      // update the relationship data
+      EventBus.getDefault().post(new DoRelationshipUpdate(_relationship, relationship));
 
-      // update the underlying fact
-      this._fact = new Fact(subject.getText(), relationship.getText(), object.getText());
+      // update the relationship
+      this._relationship = new Relationship(name.getText(), Set.of());
 
       // go back to view mode
       this.viewMode();
     });
     this.getChildren().clear();
-    this.getChildren().addAll(subject, relationship, object, gap, btn_cancel, btn_save);
+    this.getChildren().addAll(name, correlates, gap, btn_cancel, btn_save);
 
   }
 }

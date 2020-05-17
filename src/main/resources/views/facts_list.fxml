@@ -10,7 +10,7 @@
 <GridPane
         xmlns:fx="http://javafx.com/fxml"
         xmlns="http://javafx.com/javafx"
-        fx:controller="savvy.ui.facts_filter_list.FactsFilterListController"
+        fx:controller="savvy.ui.facts_list.FactsListController"
         vgap="10"
         gridLinesVisible="false"
 >
