@@ -12,7 +12,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.EntitiesNamesUpdated;
-import savvy.core.fact.DoFactCreate;
+import savvy.core.fact.FactCreated;
 import savvy.core.fact.RelatedFactsRead;
 
 import java.net.URL;
@@ -48,7 +48,7 @@ public class FactsFilterListController implements Initializable {
 
   //=== event listeners =========================================================================\\
 
-  // related facts (db) -> populate facts list
+  // related facts read -> populate facts list
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelatedFactsRead ev) {
     lv_facts.getItems().clear();
     List<FactItemView> layouts =
@@ -58,7 +58,7 @@ public class FactsFilterListController implements Initializable {
 
   }
 
-  // app.entities -> autocomplete list
+  // entities names updated -> autocomplete list
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
     if (_fb != null) {
       _fb.dispose();
@@ -66,8 +66,8 @@ public class FactsFilterListController implements Initializable {
     _fb = TextFields.bindAutoCompletion(_filter, ev.entities);
   }
 
-  // fact create -> add item to facts list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactCreate ev) {
+  // fact created -> add item to facts list
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
     lv_facts.getItems().add(new FactItemView(ev.fact, lv_facts));
   }
 

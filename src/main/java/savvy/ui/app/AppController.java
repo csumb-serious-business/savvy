@@ -80,22 +80,22 @@ public class AppController implements Initializable {
 
 
   //=== event listeners =========================================================================\\
-  // fact create -> message
+  // fact created -> message
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
     txt_msg.setText("Saved fact: " + ev.fact);
   }
 
-  // fact update -> message
+  // fact updated -> message
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
     txt_msg.setText("Updated fact: " + ev.previous + " -> " + ev.current);
   }
 
-  // fact delete -> message
+  // fact deleted -> message
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
     txt_msg.setText("Deleted fact: " + ev.fact);
   }
 
-  // filter submit -> dispatch DoRelatedFactsRead
+  // filter submitted -> dispatch DoRelatedFactsRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FilterSubmitted ev) {
     EventBus.getDefault().post(new DoRelatedFactsRead(ev.filter));
   }
