@@ -23,7 +23,7 @@ public class App extends Application {
 
 
 
-  private final Logger log = LoggerFactory.getLogger(this.getClass());
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   public static void main(String[] args) {
     launch();

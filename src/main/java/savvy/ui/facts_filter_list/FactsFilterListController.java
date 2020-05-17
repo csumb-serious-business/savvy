@@ -11,9 +11,9 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.EntitiesNamesUpdated;
 import savvy.core.events.DoFactCreate;
 import savvy.core.events.RelatedFactsRead;
-import savvy.ui.app.EntitiesUpdated;
 
 import java.net.URL;
 import java.util.List;
@@ -30,6 +30,9 @@ public class FactsFilterListController implements Initializable {
   @FXML private TextField _filter;
   private AutoCompletionBinding<String> _fb = null;
 
+  /**
+   * filters the facts list view
+   */
   public void filter_action() {
     log.info("filter facts list: {}", "");
 
@@ -56,7 +59,7 @@ public class FactsFilterListController implements Initializable {
   }
 
   // app.entities -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
     if (_fb != null) {
       _fb.dispose();
     }

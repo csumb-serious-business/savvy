@@ -10,10 +10,10 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.Fact;
+import savvy.core.entity.EntitiesNamesUpdated;
 import savvy.core.events.DoFactCreate;
-import savvy.ui.app.EntitiesUpdated;
-import savvy.ui.app.RelationshipsUpdated;
+import savvy.core.fact.Fact;
+import savvy.core.relationship.RelationshipsNamesUpdated;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -27,10 +27,14 @@ public class FactCreateController implements Initializable {
   @FXML private TextField _subject;
   @FXML private TextField _relationship;
   @FXML private TextField _object;
+
   private AutoCompletionBinding<String> _sb = null;
   private AutoCompletionBinding<String> _rb = null;
   private AutoCompletionBinding<String> _ob = null;
 
+  /**
+   * saves a fact
+   */
   public void save_action() {
     var subject = _subject.getText();
     var relationship = _relationship.getText();
@@ -49,7 +53,7 @@ public class FactCreateController implements Initializable {
   //=== event listeners =========================================================================\\
 
   // app.entities -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
     // clear old bindings
     if (_sb != null) {
       _sb.dispose();
@@ -64,13 +68,13 @@ public class FactCreateController implements Initializable {
   }
 
   // app.relationships -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsNamesUpdated ev) {
 
     // clear old binding
     if (_rb != null) {
       _rb.dispose();
     }
 
-    _rb = TextFields.bindAutoCompletion(_relationship, ev.relationships);
+    _rb = TextFields.bindAutoCompletion(_relationship, ev.names);
   }
 }

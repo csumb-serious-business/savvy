@@ -8,14 +8,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import org.greenrobot.eventbus.EventBus;
-import savvy.core.Fact;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import savvy.core.events.DoFactDelete;
 import savvy.core.events.DoFactUpdate;
+import savvy.core.fact.Fact;
 
 /**
  * controller and layout for an individual Fact Item in the FactsFilterList
  */
 public class FactItemView extends HBox {
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
   private final ListView<FactItemView> _parent;
   private Fact _fact;
 

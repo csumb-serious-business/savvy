@@ -13,7 +13,7 @@ import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.Fact;
+import savvy.core.fact.Fact;
 
 import java.io.File;
 import java.io.IOException;

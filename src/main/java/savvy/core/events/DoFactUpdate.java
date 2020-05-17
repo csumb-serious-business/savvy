@@ -2,7 +2,7 @@ package savvy.core.events;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.Fact;
+import savvy.core.fact.Fact;
 
 /**
  * fired to initiate Fact update in the DB
@@ -10,7 +10,7 @@ import savvy.core.Fact;
 public final class DoFactUpdate {
   public final Fact previous;
   public final Fact current;
-  private final Logger log = LoggerFactory.getLogger(this.getClass());
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   public DoFactUpdate(Fact previous, Fact current) {
     log.info("fact: {} -> {}", previous, current);

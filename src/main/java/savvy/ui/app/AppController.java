@@ -1,6 +1,5 @@
 package savvy.ui.app;
 
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.layout.HBox;
@@ -12,12 +11,14 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.Fact;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.entity.Entities;
 import savvy.core.events.DoFactCreate;
 import savvy.core.events.DoFactDelete;
 import savvy.core.events.DoFactUpdate;
 import savvy.core.events.RelatedFactsRead;
+import savvy.core.fact.Fact;
+import savvy.core.relationship.Relationships;
 import savvy.ui.facts_filter_list.FilterSubmitted;
 
 import java.net.URL;
@@ -30,9 +31,11 @@ import java.util.Set;
  */
 public class AppController implements Initializable {
   public static AppController instance;
-  private final Logger log = LoggerFactory.getLogger(this.getClass());
-  private final Set<String> _entities;
-  private final Set<String> _relationships;
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
+  private final Entities _entities;
+  private final Relationships _relationships;
+
   @FXML private HBox idFactCreate;
   @FXML private Pane idFactsFilterList;
   private EmbeddedNeo4j _db;
@@ -42,8 +45,8 @@ public class AppController implements Initializable {
 
   public AppController() {
     instance = this;
-    _entities = FXCollections.observableSet();
-    _relationships = FXCollections.observableSet();
+    _entities = new Entities();
+    _relationships = new Relationships();
   }
 
   /**
@@ -57,34 +60,16 @@ public class AppController implements Initializable {
   }
 
   /**
-   * loads a comprehensive collection (set) of entities for embedded views to use
-   */
-  private void loadEntities() {
-    // populate entities (triggers value changes)
-    _entities.clear();
-    _entities.addAll(_db.readAllEntities());
-    EventBus.getDefault().post(new EntitiesUpdated(_entities));
-  }
-
-  /**
-   * loads a comprehensive collection (set) of relationships for embedded views to use
-   */
-  private void loadRelationships() {
-    // populate relationships (triggers value changes)
-    _relationships.clear();
-    _relationships.addAll(_db.readAllRelationships());
-    EventBus.getDefault().post(new RelationshipsUpdated(_relationships));
-  }
-
-  /**
    * loaded action for the controller overall
    */
   public void loaded_action() {
     // register with event bus
     EventBus.getDefault().register(this);
 
-    loadEntities();
-    loadRelationships();
+    _entities.init(_db);
+    _relationships.init(_db);
+
+    // manually populate the filter
     EventBus.getDefault().post(new FilterSubmitted(""));
 
   }
@@ -95,6 +80,7 @@ public class AppController implements Initializable {
 
 
   //=== event listeners =========================================================================\\
+  // fact create -> message + relationship & entities update
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactCreate ev) {
     var fact = ev.fact;
     txt_msg.setFill(Color.FIREBRICK);
@@ -102,12 +88,11 @@ public class AppController implements Initializable {
     _db.createFact(fact);
 
     _relationships.add(fact.getRelationship());
-
-    _entities.addAll(Set.of(fact.getSubject(), fact.getObject()));
-    EventBus.getDefault().post(new EntitiesUpdated(_entities));
+    _entities.addAll(fact.getEntities());
 
   }
 
+  // fact update -> relationhsip & entities update
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactUpdate ev) {
     var previous = ev.previous;
     var current = ev.current;
@@ -116,7 +101,7 @@ public class AppController implements Initializable {
 
     // relationship change -> event
     if (!previous.getRelationship().equals(current.getRelationship())) {
-      loadRelationships();
+      _relationships.update(previous.getRelationship(), current.getRelationship());
     }
 
     // entity change -> event
@@ -129,22 +114,17 @@ public class AppController implements Initializable {
       changes.put(previous.getObject(), current.getObject());
     }
 
-    changes.forEach((p, c) -> {
-      _entities.remove(p);
-      _entities.add(c);
-    });
-
-    if (changes.size() > 0) {
-      loadEntities();
-    }
+    changes.forEach(_entities::update);
   }
 
+  // fact delete -> entities & relationships update
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactDelete ev) {
     _db.deleteFact(ev.fact);
-    loadEntities();
-    loadRelationships();
+    _entities.refresh();
+    _relationships.refresh();
   }
 
+  // filter submit -> read related facts
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FilterSubmitted ev) {
     Set<Fact> facts;
     if (ev.filter.equals("")) {
@@ -154,6 +134,4 @@ public class AppController implements Initializable {
     }
     EventBus.getDefault().post(new RelatedFactsRead(facts, _db));
   }
-
-
 }
