@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-public class Relationship {
+public class Relationship implements Comparable<Relationship> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   // authoritative name for the relationship
@@ -30,5 +30,9 @@ public class Relationship {
 
   @Override public String toString() {
     return "Relationship{" + "name='" + name + '\'' + ", correlates=" + correlates + '}';
+  }
+
+  @Override public int compareTo(Relationship o) {
+    return this.toString().compareTo(o.toString());
   }
 }

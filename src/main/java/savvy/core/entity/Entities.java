@@ -7,12 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.events.DoEntitiesRead;
+import savvy.core.entity.events.DoEntityUpdate;
 import savvy.core.entity.events.EntitiesNamesUpdated;
 import savvy.core.entity.events.EntitiesRead;
+import savvy.core.entity.events.EntityUpdated;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,14 +41,10 @@ public class Entities {
     _aliases = new HashSet<>();
   }
 
-  public Set<Entity> getItems() {
-    return _items;
-  }
-
   /**
    * @return a sorted list of names among all entities
    */
-  public List<String> getNames() {
+  private List<String> getNames() {
     return _names.stream().sorted().collect(Collectors.toList());
   }
 
@@ -91,7 +90,7 @@ public class Entities {
    * on some updates, it is impossible to predict the change
    * in the db, instead of guessing, we reload everything
    */
-  public void refresh() {
+  private void refresh() {
     _items.clear();
     _names.clear();
     _aliases.clear();
@@ -106,7 +105,7 @@ public class Entities {
    *
    * @param entity the entity to add
    */
-  public void add(Entity entity) {
+  private void add(Entity entity) {
     _items.add(entity);
     _names.add(entity.getName());
     _aliases.addAll(entity.getAliases());
@@ -118,7 +117,7 @@ public class Entities {
    *
    * @param name the entity's name
    */
-  public void add(String name) {
+  private void add(String name) {
     _names.add(name);
     notifyNamesUpdated();
 
@@ -129,8 +128,9 @@ public class Entities {
    *
    * @param names the entity names
    */
-  public void addAll(Collection<String> names) {
+  private void addAll(Collection<String> names) {
     names.forEach(this::add);
+    notifyNamesUpdated();
   }
 
   //  public void addAll(Collection<Entity> entities) {
@@ -144,7 +144,7 @@ public class Entities {
    * @param previous the entity name to change from
    * @param current  the entity name to change to
    */
-  public void update(String previous, String current) {
+  private void update(String previous, String current) {
     var changed = false;
     if (_names.contains(previous)) {
       _names.remove(previous);
@@ -175,8 +175,26 @@ public class Entities {
     var toAdd = entNames.stream().map(n -> new Entity(n, Set.of())).collect(Collectors.toSet());
     _items.addAll(toAdd);
 
-    EventBus.getDefault().post(new EntitiesRead(this));
+    var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
 
+    EventBus.getDefault().post(new EntitiesRead(result));
+
+  }
+
+  // fact create -> addAll
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntityUpdate ev) {
+    if (ev.previous.equals(ev.current)) {
+      return;
+    }
+    var pName = ev.previous.getName();
+    var cName = ev.current.getName();
+    if (!ev.previous.hasSameName(ev.current)) {
+      _db.renameEntity(pName, cName);
+    }
+
+    _db.createEntity(cName);
+
+    EventBus.getDefault().post(new EntityUpdated(ev.previous, ev.current));
   }
 
   // fact create -> addAll
@@ -207,5 +225,8 @@ public class Entities {
     refresh();
   }
 
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
+    update(ev.previous.getName(), ev.current.getName());
+  }
 
 }

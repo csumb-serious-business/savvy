@@ -54,7 +54,7 @@ public class RelationshipsListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
     lv_relationships.getItems().clear();
     List<RelationshipItemView> layouts =
-      ev.relationships.getItems().stream().map(it -> new RelationshipItemView(it, lv_relationships))
+      ev.relationships.stream().map(it -> new RelationshipItemView(it, lv_relationships))
         .collect(Collectors.toList());
     lv_relationships.getItems().addAll(layouts);
 

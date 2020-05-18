@@ -6,6 +6,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.entity.events.EntityUpdated;
 import savvy.core.fact.events.DoFactCreate;
 import savvy.core.fact.events.DoFactDelete;
 import savvy.core.fact.events.DoFactUpdate;
@@ -54,12 +55,14 @@ public class Facts {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactUpdate ev) {
-    var previous = ev.previous;
-    var current = ev.current;
-    _db.deleteFact(previous);
-    _db.createFact(current);
+    if (ev.previous.equals(ev.current)) {
+      return;
+    }
 
-    EventBus.getDefault().post(new FactUpdated(previous, current));
+    _db.deleteFact(ev.previous);
+    _db.createFact(ev.current);
+
+    EventBus.getDefault().post(new FactUpdated(ev.previous, ev.current));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactDelete ev) {
@@ -77,5 +80,10 @@ public class Facts {
 
     EventBus.getDefault().post(new FactsRead(this));
   }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
+    /// ???
+  }
+
 
 }

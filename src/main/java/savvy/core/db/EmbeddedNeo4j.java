@@ -270,12 +270,21 @@ public class EmbeddedNeo4j {
    * @param name the name of the entity to create
    * @return the node holding the new/already-existing entity
    */
-  private Node createEntity(String name) {
+  public void createEntity(String name) {
     try (var tx = _db.beginTx()) {
       Map<String, Object> params = Map.of(NAME, name);
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
       tx.commit();
-      return result;
+      //      return result;
+    }
+  }
+
+  public void renameEntity(String previous, String current) {
+    try (var tx = _db.beginTx()) {
+      var pNode = tx.findNode(ENTITY_LABEL, NAME, previous);
+      pNode.setProperty(NAME, current);
+
+      tx.commit();
     }
   }
 

@@ -28,13 +28,6 @@
             GridPane.columnIndex="0"
     />
 
-    <fx:include source="entities_list.fxml"
-                GridPane.rowIndex="2"
-                GridPane.columnIndex="0"
-                visible="false"
-    />
-
-
     <fx:include source="relationships_list.fxml"
                 GridPane.rowIndex="2"
                 GridPane.columnIndex="0"
@@ -52,9 +45,16 @@
             GridPane.columnIndex="0"
     />
 
+    <fx:include source="entities_list.fxml"
+                GridPane.rowIndex="4"
+                GridPane.columnIndex="0"
+                visible="true"
+    />
+
+
     <!-- messages for save & load -->
     <VBox spacing="2"
-          GridPane.rowIndex="4"
+          GridPane.rowIndex="5"
           GridPane.columnIndex="0"
     >
         <Text fx:id="txt_msg"

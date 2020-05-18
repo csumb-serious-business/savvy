@@ -13,6 +13,7 @@ import savvy.core.relationship.events.DoRelationshipsRead;
 import savvy.core.relationship.events.RelationshipsNamesUpdated;
 import savvy.core.relationship.events.RelationshipsRead;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +39,7 @@ public class Relationships {
     _correlates = new HashMap<>();
   }
 
-  public Set<Relationship> getItems() {
+  private Set<Relationship> getItems() {
     return _items;
   }
 
@@ -143,7 +144,9 @@ public class Relationships {
       relNames.stream().map(n -> new Relationship(n, Set.of())).collect(Collectors.toSet());
     _items.addAll(toAdd);
 
-    EventBus.getDefault().post(new RelationshipsRead(this));
+    var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
+
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 
   // fact created -> add

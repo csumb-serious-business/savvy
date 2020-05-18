@@ -11,6 +11,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesNamesUpdated;
 import savvy.core.entity.events.EntitiesRead;
 
@@ -32,6 +33,13 @@ public class EntitiesListController implements Initializable {
     EventBus.getDefault().post(new EntitiesFilterAction(filter));
   }
 
+  private void refresh(List<Entity> entities) {
+    lv_entities.getItems().clear();
+    List<EntityItemView> layouts =
+      entities.stream().map(it -> new EntityItemView(it, lv_entities)).collect(Collectors.toList());
+    lv_entities.getItems().addAll(layouts);
+  }
+
   @Override public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
   }
@@ -49,12 +57,9 @@ public class EntitiesListController implements Initializable {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
-    lv_entities.getItems().clear();
-    List<EntityItemView> layouts =
-      ev.entities.getItems().stream().map(it -> new EntityItemView(it, lv_entities))
-        .collect(Collectors.toList());
-    lv_entities.getItems().addAll(layouts);
-
+    refresh(ev.entities);
   }
+
+
 
 }
