@@ -13,6 +13,7 @@ import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
 
 import java.io.File;
@@ -138,13 +139,13 @@ public class EmbeddedNeo4j {
    * @param relationship the relationship between the subject and object
    * @param object       the object of the fact
    */
-  public void createFact(String subject, String relationship, String object) {
-    createEntity(subject);
-    createEntity(object);
+  public void createFact(Entity subject, String relationship, Entity object) {
+    createEntity(subject.getName());
+    createEntity(object.getName());
 
     try (var tx = _db.beginTx()) {
-      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
-      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject.getName());
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object.getName());
 
       var rel = subNode.createRelationshipTo(objNode, RelTypes.f2_1);
       rel.setProperty(NAME, relationship);
@@ -162,12 +163,12 @@ public class EmbeddedNeo4j {
    * remove a fact from the database
    * note: if an entity has no remaining facts, it will be removed
    */
-  public void deleteFact(String subject, String relationship, String object) {
+  public void deleteFact(Entity subject, String relationship, Entity object) {
     try (var tx = _db.beginTx()) {
 
       // find & delete the relationship between subject and object
-      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
-      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject.getName());
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object.getName());
       subNode.getRelationships(Direction.OUTGOING, RelTypes.f2_1).forEach(rel -> {
         if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME).equals(relationship)) {
           rel.delete();
@@ -256,7 +257,7 @@ public class EmbeddedNeo4j {
     var r = rel.getProperty(NAME).toString();
     var s = rel.getStartNode().getProperty(NAME).toString();
     var o = rel.getEndNode().getProperty(NAME).toString();
-    return new Fact(s, r, o);
+    return new Fact(new Entity(s, Set.of()), r, new Entity(o, Set.of()));
   }
 
 
@@ -293,11 +294,11 @@ public class EmbeddedNeo4j {
    *
    * @return the entities
    */
-  public Set<String> readAllEntities() {
-    var entities = new TreeSet<String>();
+  public Set<Entity> readAllEntities() {
+    var entities = new TreeSet<Entity>();
     try (var tx = _db.beginTx()) {
       tx.findNodes(ENTITY_LABEL).stream()
-        .forEach(n -> entities.add(n.getProperty(NAME).toString()));
+        .forEach(n -> entities.add(new Entity(n.getProperty(NAME).toString(), Set.of())));
     }
 
     return entities;
@@ -311,12 +312,13 @@ public class EmbeddedNeo4j {
    * @return a set of Entities corresponding to the entities
    * found in the traversal
    */
-  public Set<String> readMatchingEntities(String filter) {
+  public Set<Entity> readMatchingEntities(String filter) {
     // from a list of all facts
     // get those that have a participating entity that matches the filter
     // and add them to the set
     return readAllFacts().stream().map(Fact::getEntities).flatMap(Set::stream)
-      .filter(f -> f.toLowerCase().contains(filter.toLowerCase())).collect(Collectors.toSet());
+      .filter(f -> f.getName().toLowerCase().contains(filter.toLowerCase()))
+      .collect(Collectors.toSet());
 
   }
 

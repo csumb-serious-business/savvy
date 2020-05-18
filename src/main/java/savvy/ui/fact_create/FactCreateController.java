@@ -10,6 +10,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesNamesUpdated;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactCreate;
@@ -17,6 +18,7 @@ import savvy.core.relationship.events.RelationshipsNamesUpdated;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 /**
  * Controller for the Fact Creation view
@@ -36,11 +38,11 @@ public class FactCreateController implements Initializable {
    * saves a fact
    */
   public void save_action() {
-    var subject = _subject.getText();
-    var relationship = _relationship.getText();
-    var object = _object.getText();
+    var s = new Entity(_subject.getText(), Set.of());
+    var r = _relationship.getText();
+    var o = new Entity(_object.getText(), Set.of());
 
-    var fact = new Fact(subject, relationship, object);
+    var fact = new Fact(s, r, o);
     log.info("save fact: {}", fact);
     EventBus.getDefault().post(new DoFactCreate(fact));
   }

@@ -78,12 +78,18 @@ public class Entities {
     // register with event bus
     EventBus.getDefault().register(this);
 
-    var entities = _db.readAllEntities();
+    var names = extractNames(_db.readAllEntities());
 
     // todo this is a stop-gap for full-fledged entities
-    _names.addAll(entities);
+    _names.addAll(names);
     notifyNamesUpdated();
   }
+
+  private List<String> extractNames(Collection<Entity> entities) {
+    return entities.stream().map(Entity::getName).sorted().collect(Collectors.toList());
+  }
+
+
 
   /**
    * clears and reloads the data in this Entities
@@ -95,7 +101,9 @@ public class Entities {
     _names.clear();
     _aliases.clear();
 
-    _names.addAll(_db.readAllEntities());
+    var names = extractNames(_db.readAllEntities());
+
+    _names.addAll(names);
     notifyNamesUpdated();
   }
 
@@ -144,15 +152,15 @@ public class Entities {
    * @param previous the entity name to change from
    * @param current  the entity name to change to
    */
-  private void update(String previous, String current) {
+  private void update(Entity previous, Entity current) {
     var changed = false;
-    if (_names.contains(previous)) {
-      _names.remove(previous);
+    if (_names.contains(previous.getName())) {
+      _names.remove(previous.getName());
       changed = true;
     }
 
-    if (!_names.contains(current)) {
-      _names.add(current);
+    if (!_names.contains(current.getName())) {
+      _names.add(current.getName());
       changed = true;
     }
 
@@ -163,7 +171,7 @@ public class Entities {
 
   //=== event listeners =========================================================================\\
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesRead ev) {
-    Set<String> entNames;
+    Set<Entity> entNames;
 
     if (ev.filter.equals("")) {
       entNames = _db.readAllEntities();
@@ -172,7 +180,8 @@ public class Entities {
     }
 
     _items.clear();
-    var toAdd = entNames.stream().map(n -> new Entity(n, Set.of())).collect(Collectors.toSet());
+    var toAdd =
+      entNames.stream().map(n -> new Entity(n.getName(), Set.of())).collect(Collectors.toSet());
     _items.addAll(toAdd);
 
     var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
@@ -199,7 +208,8 @@ public class Entities {
 
   // fact create -> addAll
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
-    addAll(ev.fact.getEntities());
+    var names = extractNames(ev.fact.getEntities());
+    addAll(names);
   }
 
   // fact update -> update
@@ -208,7 +218,7 @@ public class Entities {
     var current = ev.current;
 
     // entity change -> event
-    var changes = new HashMap<String, String>();
+    var changes = new HashMap<Entity, Entity>();
     if (!previous.getSubject().equals(current.getSubject())) {
       changes.put(previous.getSubject(), current.getSubject());
     }
@@ -226,7 +236,7 @@ public class Entities {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
-    update(ev.previous.getName(), ev.current.getName());
+    update(ev.previous, ev.current);
   }
 
 }
