@@ -8,7 +8,6 @@
 <GridPane xmlns:fx="http://javafx.com/fxml"
           xmlns="http://javafx.com/javafx"
           fx:controller="savvy.ui.app.AppController"
-          prefHeight="400.0" prefWidth="800.0"
           alignment="center"
           hgap="10"
           vgap="10"
@@ -19,7 +18,7 @@
         <Insets top="25" right="25" bottom="25" left="25"/>
     </padding>
 
-    <fx:include fx:id="idFactCreate" source="fact_create.fxml"
+    <fx:include source="fact_create.fxml"
                 GridPane.columnIndex="0"
                 GridPane.rowIndex="0"
     />
@@ -29,12 +28,24 @@
             GridPane.columnIndex="0"
     />
 
-    <fx:include fx:id="idFactsFilterList" source="facts_filter_list.fxml"
+    <fx:include source="entities_list.fxml"
                 GridPane.rowIndex="2"
                 GridPane.columnIndex="0"
-                prefWidth="8000"
+                visible="false"
     />
 
+
+    <fx:include source="relationships_list.fxml"
+                GridPane.rowIndex="2"
+                GridPane.columnIndex="0"
+                visible="false"
+    />
+
+    <fx:include source="facts_list.fxml"
+                GridPane.rowIndex="2"
+                GridPane.columnIndex="0"
+                visible="true"
+    />
 
     <Separator
             GridPane.rowIndex="3"
@@ -46,7 +57,9 @@
           GridPane.rowIndex="4"
           GridPane.columnIndex="0"
     >
-        <Text fx:id="txt_msg"/>
+        <Text fx:id="txt_msg"
+              fill="firebrick"/>
     </VBox>
+
 
 </GridPane>

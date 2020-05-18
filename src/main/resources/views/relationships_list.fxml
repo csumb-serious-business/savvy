@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<GridPane
+        xmlns:fx="http://javafx.com/fxml"
+        xmlns="http://javafx.com/javafx"
+        fx:controller="savvy.ui.relationships_list.RelationshipsListController"
+        vgap="10"
+        gridLinesVisible="false"
+>
+    <columnConstraints>
+        <ColumnConstraints percentWidth="100"/>
+    </columnConstraints>
+    <HBox
+            GridPane.rowIndex="0"
+            GridPane.columnIndex="0"
+    >
+        <!-- filter field -->
+        <TextField fx:id="_filter"/>
+
+        <!-- load button -->
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button onAction="#filter_action">Filter</Button>
+    </HBox>
+
+    <ListView fx:id="lv_relationships"
+              GridPane.rowIndex="1"
+              GridPane.columnIndex="0"
+    />
+
+</GridPane>

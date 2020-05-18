@@ -10,7 +10,7 @@
 <GridPane
         xmlns:fx="http://javafx.com/fxml"
         xmlns="http://javafx.com/javafx"
-        fx:controller="savvy.ui.facts_filter_list.FactsFilterListController"
+        fx:controller="savvy.ui.entities_list.EntitiesListController"
         vgap="10"
         gridLinesVisible="false"
 >
@@ -29,7 +29,7 @@
         <Button onAction="#filter_action">Filter</Button>
     </HBox>
 
-    <ListView fx:id="lv_facts"
+    <ListView fx:id="lv_entities"
               GridPane.rowIndex="1"
               GridPane.columnIndex="0"
     />

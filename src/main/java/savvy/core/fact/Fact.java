@@ -1,11 +1,17 @@
-package savvy.core;
+package savvy.core.fact;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * represents a Fact that relates a particular subject entity with an object entity
  */
 public class Fact implements Comparable<Fact> {
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
   private final String subject;
   private final String relationship;
   private final String object;
@@ -44,6 +50,10 @@ public class Fact implements Comparable<Fact> {
 
   public String getObject() {
     return object;
+  }
+
+  public Set<String> getEntities() {
+    return Set.of(subject, object);
   }
 
   @Override public int compareTo(Fact o) {

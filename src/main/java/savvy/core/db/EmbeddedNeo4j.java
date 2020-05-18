@@ -13,13 +13,14 @@ import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.Fact;
+import savvy.core.fact.Fact;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -262,7 +263,6 @@ public class EmbeddedNeo4j {
 
   //--- entities --------------------------------------------------------------------------------\\
 
-
   /**
    * adds an entity to the database if it did not exist yet
    * note: it seems the fist call to this takes some time to execute
@@ -294,6 +294,23 @@ public class EmbeddedNeo4j {
     return entities;
   }
 
+  /**
+   * Travers the graph collecting all entities
+   * that match a given name and return an entity for each
+   *
+   * @param filter the name of the entity to lookup
+   * @return a set of Entities corresponding to the entities
+   * found in the traversal
+   */
+  public Set<String> readMatchingEntities(String filter) {
+    // from a list of all facts
+    // get those that have a participating entity that matches the filter
+    // and add them to the set
+    return readAllFacts().stream().map(Fact::getEntities).flatMap(Set::stream)
+      .filter(f -> f.toLowerCase().contains(filter.toLowerCase())).collect(Collectors.toSet());
+
+  }
+
   //--- relationships ---------------------------------------------------------------------------\\
 
   /**
@@ -309,6 +326,27 @@ public class EmbeddedNeo4j {
     });
     return relationships;
   }
+
+
+  /**
+   * Traverse the graph collecting all relationships
+   * that match a given name and return a relationship for each
+   *
+   * @param filter the name of the relationship to lookup
+   * @return a set of Relationship corresponding to the relationships
+   * found in the traversal
+   */
+  public Set<String> readMatchingRelationships(String filter) {
+
+    // from a list of all facts
+    // get those that contain a relationship name matching the filter
+    // and add them the the set
+    return readAllFacts().stream()
+      .filter(f -> f.getRelationship().toLowerCase().contains(filter.toLowerCase()))
+      .map(Fact::getRelationship).collect(Collectors.toSet());
+  }
+
+
 
   // describes the types of relationships within the database
   private enum RelTypes implements RelationshipType {
