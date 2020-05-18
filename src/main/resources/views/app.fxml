@@ -31,6 +31,7 @@
     <fx:include source="entities_list.fxml"
                 GridPane.rowIndex="2"
                 GridPane.columnIndex="0"
+                visible="false"
     />
 
 
@@ -43,7 +44,7 @@
     <fx:include source="facts_list.fxml"
                 GridPane.rowIndex="2"
                 GridPane.columnIndex="0"
-                visible="false"
+                visible="true"
     />
 
     <Separator
