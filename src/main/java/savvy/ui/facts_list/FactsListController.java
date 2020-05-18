@@ -41,6 +41,7 @@ public class FactsListController implements Initializable {
 
   @Override public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
+
   }
 
 
@@ -50,7 +51,8 @@ public class FactsListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsRead ev) {
     lv_facts.getItems().clear();
     List<FactItemView> layouts =
-      ev.facts.stream().map(it -> new FactItemView(it, lv_facts)).collect(Collectors.toList());
+      ev.facts.getItems().stream().map(it -> new FactItemView(it, lv_facts))
+        .collect(Collectors.toList());
 
     lv_facts.getItems().addAll(layouts);
 

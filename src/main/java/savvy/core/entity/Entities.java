@@ -38,6 +38,10 @@ public class Entities {
     _aliases = new HashSet<>();
   }
 
+  public Set<Entity> getItems() {
+    return _items;
+  }
+
   /**
    * @return a sorted list of names among all entities
    */
@@ -159,7 +163,7 @@ public class Entities {
 
   //=== event listeners =========================================================================\\
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesRead ev) {
-    Set<String> entNames = new HashSet<>();
+    Set<String> entNames;
 
     if (ev.filter.equals("")) {
       entNames = _db.readAllEntities();
@@ -171,7 +175,7 @@ public class Entities {
     var toAdd = entNames.stream().map(n -> new Entity(n, Set.of())).collect(Collectors.toSet());
     _items.addAll(toAdd);
 
-    EventBus.getDefault().post(new EntitiesRead(_items));
+    EventBus.getDefault().post(new EntitiesRead(this));
 
   }
 

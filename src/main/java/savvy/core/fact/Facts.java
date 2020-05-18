@@ -15,6 +15,7 @@ import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.fact.events.FactsRead;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -22,8 +23,17 @@ import java.util.Set;
  */
 public class Facts {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
-
+  private Set<Fact> _items;
   private EmbeddedNeo4j _db;
+
+  public Facts() {
+    _items = new HashSet<>();
+  }
+
+
+  public Set<Fact> getItems() {
+    return _items;
+  }
 
   /**
    * iniltializes this with a given db
@@ -59,14 +69,13 @@ public class Facts {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactsRead ev) {
-    Set<Fact> facts;
     if (ev.filter.equals("")) {
-      facts = _db.readAllFacts();
+      _items = _db.readAllFacts();
     } else {
-      facts = _db.readRelatedFacts(ev.filter);
+      _items = _db.readRelatedFacts(ev.filter);
     }
 
-    EventBus.getDefault().post(new FactsRead(facts));
+    EventBus.getDefault().post(new FactsRead(this));
   }
 
 }

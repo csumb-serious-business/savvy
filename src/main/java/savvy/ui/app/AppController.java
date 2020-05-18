@@ -69,7 +69,7 @@ public class AppController implements Initializable {
     _entities.init(_db);
     _relationships.init(_db);
 
-    // manually populate the filter
+    // manually populate the lists
     EventBus.getDefault().post(new FactsFilterAction(""));
     EventBus.getDefault().post(new RelationshipsFilterAction(""));
     EventBus.getDefault().post(new EntitiesFilterAction(""));

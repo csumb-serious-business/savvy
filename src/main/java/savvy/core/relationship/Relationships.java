@@ -38,6 +38,10 @@ public class Relationships {
     _correlates = new HashMap<>();
   }
 
+  public Set<Relationship> getItems() {
+    return _items;
+  }
+
   /**
    * @return a sorted list of names among all relationships
    */
@@ -139,7 +143,7 @@ public class Relationships {
       relNames.stream().map(n -> new Relationship(n, Set.of())).collect(Collectors.toSet());
     _items.addAll(toAdd);
 
-    EventBus.getDefault().post(new RelationshipsRead(_items));
+    EventBus.getDefault().post(new RelationshipsRead(this));
   }
 
   // fact created -> add

@@ -51,7 +51,7 @@ public class EntitiesListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
     lv_entities.getItems().clear();
     List<EntityItemView> layouts =
-      ev.entities.stream().map(it -> new EntityItemView(it, lv_entities))
+      ev.entities.getItems().stream().map(it -> new EntityItemView(it, lv_entities))
         .collect(Collectors.toList());
     lv_entities.getItems().addAll(layouts);
 
