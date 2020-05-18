@@ -1,4 +1,4 @@
-package savvy.ui.relationshps_list;
+package savvy.ui.relationships_list;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 /**
  * controller and layout for an individual Fact Item in the FactsFilterList
  */
-public class RelationshpItemView extends HBox {
+public class RelationshipItemView extends HBox {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  private final ListView<RelationshpItemView> _parent;
+  private final ListView<RelationshipItemView> _parent;
   private Relationship _relationship;
 
-  public RelationshpItemView(Relationship relationship, ListView<RelationshpItemView> parent) {
+  public RelationshipItemView(Relationship relationship, ListView<RelationshipItemView> parent) {
     super();
 
     this.setSpacing(10);
@@ -49,7 +49,7 @@ public class RelationshpItemView extends HBox {
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
 
-    // no deletion, since that would cascade all facts.
+    // no deletion, since that would cascade to all facts.
     // (causing possibly unexpected consequences)
     // instead when all related facts have on reference to
     // a relationship it is removed

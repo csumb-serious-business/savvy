@@ -6,6 +6,9 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.entity.events.DoEntitiesRead;
+import savvy.core.entity.events.EntitiesNamesUpdated;
+import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
@@ -155,6 +158,23 @@ public class Entities {
   }
 
   //=== event listeners =========================================================================\\
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesRead ev) {
+    Set<String> entNames = new HashSet<>();
+
+    if (ev.filter.equals("")) {
+      entNames = _db.readAllEntities();
+    } else {
+      entNames = _db.readMatchingEntities(ev.filter);
+    }
+
+    _items.clear();
+    var toAdd = entNames.stream().map(n -> new Entity(n, Set.of())).collect(Collectors.toSet());
+    _items.addAll(toAdd);
+
+    EventBus.getDefault().post(new EntitiesRead(_items));
+
+  }
+
   // fact create -> addAll
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
     addAll(ev.fact.getEntities());

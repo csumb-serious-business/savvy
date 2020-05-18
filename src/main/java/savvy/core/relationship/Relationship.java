@@ -11,7 +11,8 @@ public class Relationship {
   // authoritative name for the relationship
   private final String name;
 
-  // pairs of outgoing and incoming mappings between subjects and objects in
+  // pairs of outgoing and incoming mappings between subjects and objects
+  // participating in the relationship
   private final Set<Correlate> correlates;
 
   public Relationship(String name, Set<Correlate> correlates) {

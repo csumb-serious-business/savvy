@@ -125,7 +125,6 @@ public class Relationships {
 
   //=== event listeners =========================================================================\\
 
-
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipsRead ev) {
     Set<String> relNames;
 

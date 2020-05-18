@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.Entities;
+import savvy.core.entity.events.DoEntitiesRead;
 import savvy.core.fact.Facts;
 import savvy.core.fact.events.DoFactsRead;
 import savvy.core.fact.events.FactCreated;
@@ -17,8 +18,9 @@ import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.relationship.Relationships;
 import savvy.core.relationship.events.DoRelationshipsRead;
+import savvy.ui.entities_list.EntitiesFilterAction;
 import savvy.ui.facts_list.FactsFilterAction;
-import savvy.ui.relationshps_list.RelationshipsFilterAction;
+import savvy.ui.relationships_list.RelationshipsFilterAction;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -70,6 +72,7 @@ public class AppController implements Initializable {
     // manually populate the filter
     EventBus.getDefault().post(new FactsFilterAction(""));
     EventBus.getDefault().post(new RelationshipsFilterAction(""));
+    EventBus.getDefault().post(new EntitiesFilterAction(""));
 
   }
 
@@ -102,6 +105,11 @@ public class AppController implements Initializable {
   // relationships filter submitted -> dispatch DoRelationshipsRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsFilterAction ev) {
     EventBus.getDefault().post(new DoRelationshipsRead(ev.filter));
+  }
+
+  // entities filter submitted -> dispatch DoEntitiesRead
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesFilterAction ev) {
+    EventBus.getDefault().post(new DoEntitiesRead(ev.filter));
   }
 
 }

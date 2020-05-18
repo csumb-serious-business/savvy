@@ -1,4 +1,4 @@
-package savvy.ui.relationshps_list;
+package savvy.ui.entities_list;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -11,28 +11,25 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.relationship.events.RelationshipsNamesUpdated;
-import savvy.core.relationship.events.RelationshipsRead;
+import savvy.core.entity.events.EntitiesNamesUpdated;
+import savvy.core.entity.events.EntitiesRead;
 
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-
-public class RelationshipsListController implements Initializable {
+public class EntitiesListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
-
-  @FXML private ListView<RelationshpItemView> lv_relationships;
+  private AutoCompletionBinding<String> _fb = null;
+  @FXML private ListView<EntityItemView> lv_entities;
   @FXML private TextField _filter;
-
-  private AutoCompletionBinding _fb = null;
 
   public void filter_action() {
     var filter = _filter.getText();
-    log.info("filter relationships list: {}", filter);
+    log.info("filter entities list: {}", filter);
 
-    EventBus.getDefault().post(new RelationshipsFilterAction(filter));
+    EventBus.getDefault().post(new EntitiesFilterAction(filter));
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
@@ -41,8 +38,8 @@ public class RelationshipsListController implements Initializable {
 
   //=== event listeners =========================================================================\\
 
-  // relationship names updated -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsNamesUpdated ev) {
+  // entities names updated -> autocomplete list
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
 
     if (_fb != null) {
       // dispose old autocomplete binding if it exists
@@ -51,14 +48,13 @@ public class RelationshipsListController implements Initializable {
     _fb = TextFields.bindAutoCompletion(_filter, ev.names);
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
-    lv_relationships.getItems().clear();
-    List<RelationshpItemView> layouts =
-      ev.relationships.stream().map(it -> new RelationshpItemView(it, lv_relationships))
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
+    lv_entities.getItems().clear();
+    List<EntityItemView> layouts =
+      ev.entities.stream().map(it -> new EntityItemView(it, lv_entities))
         .collect(Collectors.toList());
-    lv_relationships.getItems().addAll(layouts);
+    lv_entities.getItems().addAll(layouts);
 
   }
-
 
 }

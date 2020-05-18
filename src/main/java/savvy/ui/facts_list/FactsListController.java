@@ -11,7 +11,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.entity.EntitiesNamesUpdated;
+import savvy.core.entity.events.EntitiesNamesUpdated;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactsRead;
 
@@ -62,7 +62,7 @@ public class FactsListController implements Initializable {
     if (_fb != null) {
       _fb.dispose();
     }
-    _fb = TextFields.bindAutoCompletion(_filter, ev.entities);
+    _fb = TextFields.bindAutoCompletion(_filter, ev.names);
   }
 
   // fact created -> add item to facts list
