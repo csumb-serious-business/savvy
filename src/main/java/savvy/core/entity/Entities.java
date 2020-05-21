@@ -66,10 +66,9 @@ public class Entities {
 
     var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
     EventBus.getDefault().post(new EntitiesRead(result));
-
   }
 
-  // todo -- this belongs to Entity, not entities [MBR]
+  // todo -- this belongs to Entity, not Entities [MBR]
   private void entityUpdate(Entity previous, Entity current) {
     if (previous.equals(current)) {
       return;
@@ -118,6 +117,10 @@ public class Entities {
 
   // fact deleted -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+    refresh();
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
     refresh();
   }
 

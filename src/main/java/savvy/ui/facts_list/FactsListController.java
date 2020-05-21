@@ -13,6 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesRead;
+import savvy.core.entity.events.EntityUpdated;
+import savvy.core.fact.Fact;
+import savvy.core.fact.events.DoFactsRead;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactsRead;
 
@@ -32,19 +35,20 @@ public class FactsListController implements Initializable {
   @FXML private ListView<FactItemView> lv_facts;
   @FXML private TextField _filter;
   private AutoCompletionBinding<String> _fb = null;
+  private String lastFilter = "";
 
   /**
    * filters the facts list view
    */
   public void filter_action() {
     var filter = _filter.getText();
+    lastFilter = filter;
     log.info("filter facts list: {}", filter);
     EventBus.getDefault().post(new FactsFilterAction(filter));
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
-
   }
 
   private void updateEntitiesAutocomplete(Collection<Entity> entities) {
@@ -60,18 +64,20 @@ public class FactsListController implements Initializable {
 
   }
 
+  private void refresh(Collection<Fact> facts) {
+    lv_facts.getItems().clear();
+    List<FactItemView> layouts =
+      facts.stream().map(it -> new FactItemView(it, lv_facts)).collect(Collectors.toList());
+
+    lv_facts.getItems().addAll(layouts);
+  }
+
 
   //=== event listeners =========================================================================\\
 
   // related facts read -> populate facts list
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsRead ev) {
-    lv_facts.getItems().clear();
-    List<FactItemView> layouts =
-      ev.facts.getItems().stream().map(it -> new FactItemView(it, lv_facts))
-        .collect(Collectors.toList());
-
-    lv_facts.getItems().addAll(layouts);
-
+    refresh(ev.facts.getItems());
   }
 
   // entities names updated -> autocomplete list
@@ -83,5 +89,10 @@ public class FactsListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
     lv_facts.getItems().add(new FactItemView(ev.fact, lv_facts));
   }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
+    EventBus.getDefault().post(new DoFactsRead(""));
+  }
+
 
 }
