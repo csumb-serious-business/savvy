@@ -20,6 +20,15 @@ public class Relationship implements Comparable<Relationship> {
     this.correlates = correlates;
   }
 
+  /**
+   * @return a Set of all forms of this relationship
+   * including its authoritative name and all of its correlates
+   */
+  public Set<String> allForms() {
+    // todo -- add correlates [MBR]
+    return Set.of(this.getName());
+  }
+
   public String getName() {
     return name;
   }

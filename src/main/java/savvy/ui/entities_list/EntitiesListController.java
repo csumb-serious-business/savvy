@@ -35,6 +35,11 @@ public class EntitiesListController implements Initializable {
     EventBus.getDefault().post(new EntitiesFilterAction(filter));
   }
 
+  /**
+   * updates the autocomplete filter
+   *
+   * @param entities to use for the suggestions
+   */
   private void updateAutocomplete(Collection<Entity> entities) {
     // dispose old autocomplete binding if it exists
     if (_fb != null) {
@@ -47,7 +52,12 @@ public class EntitiesListController implements Initializable {
     _fb = TextFields.bindAutoCompletion(_filter, identifiers);
   }
 
-  private void updateEntitiesLV(List<Entity> entities) {
+  /**
+   * updates the entities list view
+   *
+   * @param entities to populate the list view with
+   */
+  private void updateEntitiesLV(Collection<Entity> entities) {
     lv_entities.getItems().clear();
     List<EntityItemView> layouts =
       entities.stream().map(it -> new EntityItemView(it, lv_entities)).collect(Collectors.toList());
@@ -59,13 +69,13 @@ public class EntitiesListController implements Initializable {
   }
 
   //=== event listeners =========================================================================\\
-  // entities read -> changes autocomplete & list view of entities
+  // entities read -> update autocomplete & list view
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
     updateAutocomplete(ev.entities);
     updateEntitiesLV(ev.entities);
   }
 
-  // entities filtered -> changes list view of entities
+  // entities filtered -> update list view
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesFiltered ev) {
     updateEntitiesLV(ev.entities);
   }

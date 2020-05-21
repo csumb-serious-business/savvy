@@ -24,6 +24,10 @@ public class Entity implements Comparable<Entity> {
     this.aliases = aliases;
   }
 
+  /**
+   * @return a set of all identifiers for this Entity
+   * including its authoritative name and all its aliases
+   */
   public Set<String> getIdentifiers() {
     var identifiers = new HashSet<>(this.aliases);
     identifiers.add(name);
@@ -45,14 +49,6 @@ public class Entity implements Comparable<Entity> {
 
   @Override public int compareTo(Entity o) {
     return this.toString().compareTo(o.toString());
-  }
-
-  public boolean hasSameName(Entity o) {
-    return this.getName().equals(o.getName());
-  }
-
-  public boolean hasSameAliases(Entity o) {
-    return this.getAliases().equals(o.getAliases());
   }
 
   @Override public boolean equals(Object o) {

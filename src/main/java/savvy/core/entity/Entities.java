@@ -37,16 +37,6 @@ public class Entities {
   }
 
   /**
-   * @return a sorted list of identifiers among all entities
-   * these include all names and aliases
-   */
-  private List<String> getIdentifiers() {
-    var identifiers = _items.stream().map(Entity::getIdentifiers).flatMap(Set::stream).sorted()
-      .collect(Collectors.toSet());
-    return identifiers.stream().sorted().collect(Collectors.toList());
-  }
-
-  /**
    * initializes this with a given db
    *
    * @param db the db to use
@@ -60,6 +50,10 @@ public class Entities {
     refresh();
   }
 
+  /**
+   * goes to the db to get an up-to-date version of all entities
+   * broadcasts the read event on the event bus
+   */
   private void refresh() {
     _items.clear();
     _items.addAll(_db.readAllEntities());
@@ -68,15 +62,20 @@ public class Entities {
     EventBus.getDefault().post(new EntitiesRead(result));
   }
 
-  // todo -- this belongs to Entity, not Entities [MBR]
+  /**
+   * updates a particular entity in the db
+   * broadcasts the change on the event bus
+   *
+   * @param previous previous version of the Entity
+   * @param current  current version of the Entity
+   */
   private void entityUpdate(Entity previous, Entity current) {
     if (previous.equals(current)) {
       return;
     }
-    var pName = previous.getName();
-    var cName = current.getName();
-    if (!previous.hasSameName(current)) {
-      _db.renameEntity(pName, cName);
+
+    if (!previous.equals(current)) {
+      _db.updateEntity(previous, current);
     }
 
     _db.createEntity(current);
@@ -84,6 +83,11 @@ public class Entities {
     EventBus.getDefault().post(new EntityUpdated(previous, current));
   }
 
+  /**
+   * broadcasts a filtered copy of contained Entity items on the event bus
+   *
+   * @param filter the string filter to match against
+   */
   private void entitiesFilter(String filter) {
     List<Entity> entities = _items.stream().filter(i -> i.getName().contains(filter)).sorted()
       .collect(Collectors.toList());
@@ -91,6 +95,7 @@ public class Entities {
   }
 
   //=== event listeners =========================================================================\\
+  //--- DOs -------------------------------------------------------------------------------------\\
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesRead ev) {
     refresh();
   }
@@ -99,18 +104,18 @@ public class Entities {
     entitiesFilter(ev.filter);
   }
 
-  // update details of one entity (changing its name or aliases)
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntityUpdate ev) {
     // entity should update itself
     entityUpdate(ev.previous, ev.current);
   }
 
-  // fact create -> addAll
+  //--- ONs -------------------------------------------------------------------------------------\\
+  // fact created -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
     refresh();
   }
 
-  // fact update -> update
+  // fact updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
     refresh();
   }
@@ -120,6 +125,7 @@ public class Entities {
     refresh();
   }
 
+  // entity updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
     refresh();
   }

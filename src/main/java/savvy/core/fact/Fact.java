@@ -3,6 +3,7 @@ package savvy.core.fact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
+import savvy.core.relationship.Relationship;
 
 import java.util.Objects;
 import java.util.Set;
@@ -14,10 +15,10 @@ public class Fact implements Comparable<Fact> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   private final Entity subject;
-  private final String relationship;
+  private final Relationship relationship;
   private final Entity object;
 
-  public Fact(Entity subject, String relationship, Entity object) {
+  public Fact(Entity subject, Relationship relationship, Entity object) {
     this.subject = subject;
     this.relationship = relationship;
     this.object = object;
@@ -38,14 +39,14 @@ public class Fact implements Comparable<Fact> {
   }
 
   @Override public String toString() {
-    return subject.getName() + " | " + relationship + " | " + object.getName();
+    return subject.getName() + " | " + relationship.getName() + " | " + object.getName();
   }
 
   public Entity getSubject() {
     return subject;
   }
 
-  public String getRelationship() {
+  public Relationship getRelationship() {
     return relationship;
   }
 

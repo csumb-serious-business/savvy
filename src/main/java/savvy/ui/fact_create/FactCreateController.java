@@ -14,7 +14,8 @@ import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactCreate;
-import savvy.core.relationship.events.RelationshipsNamesUpdated;
+import savvy.core.relationship.Relationship;
+import savvy.core.relationship.events.RelationshipsRead;
 
 import java.net.URL;
 import java.util.Collection;
@@ -41,7 +42,7 @@ public class FactCreateController implements Initializable {
    */
   public void save_action() {
     var s = new Entity(_subject.getText(), Set.of());
-    var r = _relationship.getText();
+    var r = new Relationship(_relationship.getText(), Set.of());
     var o = new Entity(_object.getText(), Set.of());
 
     var fact = new Fact(s, r, o);
@@ -53,6 +54,11 @@ public class FactCreateController implements Initializable {
     EventBus.getDefault().register(this);
   }
 
+  /**
+   * updates the autocomplete filter
+   *
+   * @param entities to use for the suggestions
+   */
   private void updateEntitiesAutocomplete(Collection<Entity> entities) {
     // clear old bindings
     if (_sb != null) {
@@ -69,22 +75,33 @@ public class FactCreateController implements Initializable {
 
   }
 
-
-  //=== event listeners =========================================================================\\
-
-  // app.entities -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
-    updateEntitiesAutocomplete(ev.entities);
-  }
-
-  // app.relationships -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsNamesUpdated ev) {
-
+  /**
+   * updates the autocomplete filter
+   *
+   * @param relationships to use for the suggestions
+   */
+  private void updateRelationshipsAutocomplete(Collection<Relationship> relationships) {
     // clear old binding
     if (_rb != null) {
       _rb.dispose();
     }
 
-    _rb = TextFields.bindAutoCompletion(_relationship, ev.names);
+    // todo -- should be relationship and all correlates [MBR]
+    var rels =
+      relationships.stream().map(Relationship::getName).sorted().collect(Collectors.toList());
+
+    _rb = TextFields.bindAutoCompletion(_relationship, rels);
+  }
+
+  //=== event listeners =========================================================================\\
+
+  // entities read -> update entities autocomplete
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
+    updateEntitiesAutocomplete(ev.entities);
+  }
+
+  // relationships read -> update relationships autocomplete
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
+    updateRelationshipsAutocomplete(ev.relationships);
   }
 }

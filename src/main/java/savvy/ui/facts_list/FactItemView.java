@@ -14,6 +14,7 @@ import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactDelete;
 import savvy.core.fact.events.DoFactUpdate;
+import savvy.core.relationship.Relationship;
 
 import java.util.Set;
 
@@ -76,7 +77,7 @@ public class FactItemView extends HBox {
     subject.setMaxWidth(width);
 
     var relationship = new TextField();
-    relationship.setText(_fact.getRelationship());
+    relationship.setText(_fact.getRelationship().getName());
     relationship.setMaxWidth(width);
 
     var object = new TextField();
@@ -96,7 +97,7 @@ public class FactItemView extends HBox {
     btn_save.setOnAction(ev -> {
       // go straight to view-mode if no change
       var s = new Entity(subject.getText(), Set.of());
-      var r = relationship.getText();
+      var r = new Relationship(relationship.getText(), Set.of());
       var o = new Entity(object.getText(), Set.of());
       var fact = new Fact(s, r, o);
 

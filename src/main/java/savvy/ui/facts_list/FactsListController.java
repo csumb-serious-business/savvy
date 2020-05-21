@@ -18,6 +18,7 @@ import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactsRead;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactsRead;
+import savvy.core.relationship.events.RelationshipUpdated;
 
 import java.net.URL;
 import java.util.Collection;
@@ -51,6 +52,11 @@ public class FactsListController implements Initializable {
     EventBus.getDefault().register(this);
   }
 
+  /**
+   * updates the autocomplete filter
+   *
+   * @param entities the entities to use for the suggestions
+   */
   private void updateEntitiesAutocomplete(Collection<Entity> entities) {
     // clear old bindings
     if (_fb != null) {
@@ -64,6 +70,11 @@ public class FactsListController implements Initializable {
 
   }
 
+  /**
+   * clears and repopulates the facts in the list view
+   *
+   * @param facts to populate into the view
+   */
   private void refresh(Collection<Fact> facts) {
     lv_facts.getItems().clear();
     List<FactItemView> layouts =
@@ -91,6 +102,10 @@ public class FactsListController implements Initializable {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
+    EventBus.getDefault().post(new DoFactsRead(""));
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipUpdated ev) {
     EventBus.getDefault().post(new DoFactsRead(""));
   }
 
