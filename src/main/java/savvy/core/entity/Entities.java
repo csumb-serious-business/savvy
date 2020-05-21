@@ -6,15 +6,17 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
+import savvy.core.entity.events.DoEntitiesFilter;
 import savvy.core.entity.events.DoEntitiesRead;
-import savvy.core.entity.events.EntitiesNamesUpdated;
+import savvy.core.entity.events.DoEntityUpdate;
+import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
+import savvy.core.entity.events.EntityUpdated;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,42 +29,12 @@ public class Entities {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   private final Set<Entity> _items;
-  private final Set<String> _names;
-  private final Set<String> _aliases;
 
   private EmbeddedNeo4j _db;
 
   public Entities() {
     _items = new HashSet<>();
-    _names = new HashSet<>();
-    _aliases = new HashSet<>();
   }
-
-  /**
-   * @return a sorted list of names among all entities
-   */
-  public List<String> getNames() {
-    return _names.stream().sorted().collect(Collectors.toList());
-  }
-
-  /**
-   * @return a sorted list of identifiers among all entities
-   * these include all names and aliases
-   */
-  public List<String> getIdentifiers() {
-    var set = new HashSet<>(_names);
-    set.addAll(_aliases);
-    return set.stream().sorted().collect(Collectors.toList());
-  }
-
-
-  /**
-   * fires a names updated notification for listeners
-   */
-  private void notifyNamesUpdated() {
-    EventBus.getDefault().post(new EntitiesNamesUpdated(getNames()));
-  }
-
 
   /**
    * initializes this with a given db
@@ -75,127 +47,77 @@ public class Entities {
     // register with event bus
     EventBus.getDefault().register(this);
 
-    var entities = _db.readAllEntities();
-
-    // todo this is a stop-gap for full-fledged entities
-    _names.addAll(entities);
-    notifyNamesUpdated();
+    refresh();
   }
 
   /**
-   * clears and reloads the data in this Entities
-   * on some updates, it is impossible to predict the change
-   * in the db, instead of guessing, we reload everything
+   * goes to the db to get an up-to-date version of all entities
+   * broadcasts the read event on the event bus
    */
-  public void refresh() {
+  private void refresh() {
     _items.clear();
-    _names.clear();
-    _aliases.clear();
+    _items.addAll(_db.readAllEntities());
 
-    _names.addAll(_db.readAllEntities());
-    notifyNamesUpdated();
-  }
-
-
-  /**
-   * adds an entity
-   *
-   * @param entity the entity to add
-   */
-  public void add(Entity entity) {
-    _items.add(entity);
-    _names.add(entity.getName());
-    _aliases.addAll(entity.getAliases());
-    notifyNamesUpdated();
+    var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
+    EventBus.getDefault().post(new EntitiesRead(result));
   }
 
   /**
-   * adds an entity by name
+   * updates a particular entity in the db
+   * broadcasts the change on the event bus
    *
-   * @param name the entity's name
+   * @param previous previous version of the Entity
+   * @param current  current version of the Entity
    */
-  public void add(String name) {
-    _names.add(name);
-    notifyNamesUpdated();
-
-  }
-
-  /**
-   * adds a collection of entities by name
-   *
-   * @param names the entity names
-   */
-  public void addAll(Collection<String> names) {
-    names.forEach(this::add);
-  }
-
-  //  public void addAll(Collection<Entity> entities) {
-  //    entities.forEach(this::add);
-  //  }
-
-
-  /**
-   * updates an entity, given a previous name and a current name
-   *
-   * @param previous the entity name to change from
-   * @param current  the entity name to change to
-   */
-  public void update(String previous, String current) {
-    var changed = false;
-    if (_names.contains(previous)) {
-      _names.remove(previous);
-      changed = true;
+  private void entityUpdate(Entity previous, Entity current) {
+    if (previous.equals(current)) {
+      return;
     }
 
-    if (!_names.contains(current)) {
-      _names.add(current);
-      changed = true;
+    if (!previous.equals(current)) {
+      _db.updateEntity(previous, current);
     }
 
-    if (changed) {
-      notifyNamesUpdated();
-    }
+    _db.createEntity(current);
+
+    EventBus.getDefault().post(new EntityUpdated(previous, current));
+  }
+
+  /**
+   * broadcasts a filtered copy of contained Entity items on the event bus
+   *
+   * @param filter the string filter to match against
+   */
+  private void entitiesFilter(String filter) {
+    List<Entity> entities = _items.stream().filter(i -> i.getName().contains(filter)).sorted()
+      .collect(Collectors.toList());
+    EventBus.getDefault().post(new EntitiesFiltered(entities));
   }
 
   //=== event listeners =========================================================================\\
+  //--- DOs -------------------------------------------------------------------------------------\\
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesRead ev) {
-    Set<String> entNames = new HashSet<>();
-
-    if (ev.filter.equals("")) {
-      entNames = _db.readAllEntities();
-    } else {
-      entNames = _db.readMatchingEntities(ev.filter);
-    }
-
-    _items.clear();
-    var toAdd = entNames.stream().map(n -> new Entity(n, Set.of())).collect(Collectors.toSet());
-    _items.addAll(toAdd);
-
-    EventBus.getDefault().post(new EntitiesRead(_items));
-
+    refresh();
   }
 
-  // fact create -> addAll
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesFilter ev) {
+    entitiesFilter(ev.filter);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntityUpdate ev) {
+    // entity should update itself
+    entityUpdate(ev.previous, ev.current);
+  }
+
+  //--- ONs -------------------------------------------------------------------------------------\\
+  // fact created -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
-    addAll(ev.fact.getEntities());
+    refresh();
   }
 
-  // fact update -> update
+  // fact updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
-    var previous = ev.previous;
-    var current = ev.current;
-
-    // entity change -> event
-    var changes = new HashMap<String, String>();
-    if (!previous.getSubject().equals(current.getSubject())) {
-      changes.put(previous.getSubject(), current.getSubject());
-    }
-
-    if (!previous.getObject().equals(current.getObject())) {
-      changes.put(previous.getObject(), current.getObject());
-    }
-
-    changes.forEach(this::update);
+    refresh();
   }
 
   // fact deleted -> refresh
@@ -203,5 +125,9 @@ public class Entities {
     refresh();
   }
 
+  // entity updated -> refresh
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
+    refresh();
+  }
 
 }

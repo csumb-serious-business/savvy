@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-public class Relationship {
+public class Relationship implements Comparable<Relationship> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   // authoritative name for the relationship
@@ -20,6 +20,15 @@ public class Relationship {
     this.correlates = correlates;
   }
 
+  /**
+   * @return a Set of all forms of this relationship
+   * including its authoritative name and all of its correlates
+   */
+  public Set<String> allForms() {
+    // todo -- add correlates [MBR]
+    return Set.of(this.getName());
+  }
+
   public String getName() {
     return name;
   }
@@ -30,5 +39,9 @@ public class Relationship {
 
   @Override public String toString() {
     return "Relationship{" + "name='" + name + '\'' + ", correlates=" + correlates + '}';
+  }
+
+  @Override public int compareTo(Relationship o) {
+    return this.toString().compareTo(o.toString());
   }
 }

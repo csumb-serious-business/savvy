@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.Entities;
-import savvy.core.entity.events.DoEntitiesRead;
+import savvy.core.entity.events.DoEntitiesFilter;
 import savvy.core.fact.Facts;
 import savvy.core.fact.events.DoFactsRead;
 import savvy.core.fact.events.FactCreated;
@@ -69,7 +69,7 @@ public class AppController implements Initializable {
     _entities.init(_db);
     _relationships.init(_db);
 
-    // manually populate the filter
+    // manually populate the lists
     EventBus.getDefault().post(new FactsFilterAction(""));
     EventBus.getDefault().post(new RelationshipsFilterAction(""));
     EventBus.getDefault().post(new EntitiesFilterAction(""));
@@ -109,7 +109,7 @@ public class AppController implements Initializable {
 
   // entities filter submitted -> dispatch DoEntitiesRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesFilterAction ev) {
-    EventBus.getDefault().post(new DoEntitiesRead(ev.filter));
+    EventBus.getDefault().post(new DoEntitiesFilter(ev.filter));
   }
 
 }

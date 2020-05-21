@@ -4,17 +4,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * fired upon return of entities from the DB
  */
 public final class EntitiesRead {
-  public final Set<Entity> entities;
+  public final List<Entity> entities;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public EntitiesRead(Set<Entity> entities) {
-    log.info("relationships: {}", entities.size());
+  public EntitiesRead(List<Entity> entities) {
+    log.info("entities: {}", entities.size());
     this.entities = entities;
   }
 }

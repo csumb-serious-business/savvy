@@ -7,14 +7,14 @@ import savvy.core.relationship.Relationship;
 import java.util.List;
 
 /**
- * fired upon return of relationships from the DB
+ * fired upon return of filtered list of Relationships
  */
-public final class RelationshipsRead {
+public final class RelationshipsFiltered {
   public final List<Relationship> relationships;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public RelationshipsRead(List<Relationship> relationships) {
-    log.info("relationships: {}", relationships.size());
-    this.relationships = relationships;
+  public RelationshipsFiltered(List<Relationship> entities) {
+    log.info("relationships: {}", entities.size());
+    this.relationships = entities;
   }
 }

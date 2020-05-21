@@ -2,6 +2,8 @@ package savvy.core.fact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
+import savvy.core.relationship.Relationship;
 
 import java.util.Objects;
 import java.util.Set;
@@ -12,11 +14,11 @@ import java.util.Set;
 public class Fact implements Comparable<Fact> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  private final String subject;
-  private final String relationship;
-  private final String object;
+  private final Entity subject;
+  private final Relationship relationship;
+  private final Entity object;
 
-  public Fact(String subject, String relationship, String object) {
+  public Fact(Entity subject, Relationship relationship, Entity object) {
     this.subject = subject;
     this.relationship = relationship;
     this.object = object;
@@ -37,22 +39,22 @@ public class Fact implements Comparable<Fact> {
   }
 
   @Override public String toString() {
-    return subject + " | " + relationship + " | " + object;
+    return subject.getName() + " | " + relationship.getName() + " | " + object.getName();
   }
 
-  public String getSubject() {
+  public Entity getSubject() {
     return subject;
   }
 
-  public String getRelationship() {
+  public Relationship getRelationship() {
     return relationship;
   }
 
-  public String getObject() {
+  public Entity getObject() {
     return object;
   }
 
-  public Set<String> getEntities() {
+  public Set<Entity> getEntities() {
     return Set.of(subject, object);
   }
 

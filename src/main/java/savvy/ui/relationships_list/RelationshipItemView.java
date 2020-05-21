@@ -44,7 +44,7 @@ public class RelationshipItemView extends HBox {
    */
   private void viewMode() {
     var label = new Label();
-    label.setText(_relationship.toString());
+    label.setText(_relationship.getName());
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);

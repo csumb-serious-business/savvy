@@ -7,11 +7,9 @@ import org.slf4j.LoggerFactory;
  * fired to initiate reading entities from the DB
  */
 public final class DoEntitiesRead {
-  public final String filter;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public DoEntitiesRead(String filter) {
-    log.info("filter: \"{}\"", filter);
-    this.filter = filter;
+  public DoEntitiesRead() {
+    log.info("");
   }
 }

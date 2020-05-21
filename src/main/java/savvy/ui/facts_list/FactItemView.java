@@ -10,9 +10,13 @@ import javafx.scene.layout.Region;
 import org.greenrobot.eventbus.EventBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactDelete;
 import savvy.core.fact.events.DoFactUpdate;
+import savvy.core.relationship.Relationship;
+
+import java.util.Set;
 
 /**
  * controller and layout for an individual Fact Item in the FactsFilterList
@@ -69,15 +73,15 @@ public class FactItemView extends HBox {
     final double width = this.widthProperty().doubleValue() / 5.0d;
 
     var subject = new TextField();
-    subject.setText(_fact.getSubject());
+    subject.setText(_fact.getSubject().getName());
     subject.setMaxWidth(width);
 
     var relationship = new TextField();
-    relationship.setText(_fact.getRelationship());
+    relationship.setText(_fact.getRelationship().getName());
     relationship.setMaxWidth(width);
 
     var object = new TextField();
-    object.setText(_fact.getObject());
+    object.setText(_fact.getObject().getName());
     object.setMaxWidth(width);
 
     var gap = new Region();
@@ -92,7 +96,10 @@ public class FactItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
       // go straight to view-mode if no change
-      var fact = new Fact(subject.getText(), relationship.getText(), object.getText());
+      var s = new Entity(subject.getText(), Set.of());
+      var r = new Relationship(relationship.getText(), Set.of());
+      var o = new Entity(object.getText(), Set.of());
+      var fact = new Fact(s, r, o);
 
       if (this._fact.equals(fact)) {
         this.viewMode();
@@ -103,7 +110,7 @@ public class FactItemView extends HBox {
       EventBus.getDefault().post(new DoFactUpdate(_fact, fact));
 
       // update the underlying fact
-      this._fact = new Fact(subject.getText(), relationship.getText(), object.getText());
+      this._fact = fact;
 
       // go back to view mode
       this.viewMode();

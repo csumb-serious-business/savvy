@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.entity.events.DoEntityUpdate;
 
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * controller and layout for an individual Fact Item in the FactsFilterList
@@ -41,8 +41,11 @@ public class EntityItemView extends HBox {
    * creates & wires the layout for this item's view mode
    */
   private void viewMode() {
-    var label = new Label();
-    label.setText(_entity.toString());
+    var name = new Label();
+    name.setText(_entity.getName());
+
+    var aliases = new Label();
+    aliases.setText(String.join(", ", _entity.getAliases()));
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -56,7 +59,7 @@ public class EntityItemView extends HBox {
     btn_edit.setText("Edit");
     btn_edit.setOnAction(ev -> this.editMode());
     this.getChildren().clear();
-    this.getChildren().addAll(label, gap, btn_edit);
+    this.getChildren().addAll(name, aliases, gap, btn_edit);
   }
 
   /**
@@ -70,10 +73,19 @@ public class EntityItemView extends HBox {
     name.setText(_entity.getName());
     name.setMaxWidth(width);
 
-    var correlates = new TextField();
+    // for each alias, add a text field
+    var aliases = new HBox();
+    _entity.getAliases().forEach(a -> {
+      var field = new TextField();
+      field.setText(a);
+      aliases.getChildren().add(field);
+    });
 
-    correlates.setText(String.join(" ", _entity.getAliases()));
-    correlates.setMaxWidth(width);
+    // add a blank text field for new aliases
+    aliases.getChildren().add(new TextField());
+
+    // todo when an alias box is blank and is not the last remaining,
+    //  remove it when it loses focus
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -86,25 +98,29 @@ public class EntityItemView extends HBox {
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
-      // go straight to view-mode if no change
-      var relationship = new Entity(name.getText(), Set.of());
+      var aliasNames = aliases.getChildren().stream().filter(TextField.class::isInstance)
+        .map(a -> ((TextField) a).getText()).collect(Collectors.toSet());
 
-      if (_entity.equals(relationship)) {
+
+      // go straight to view-mode if no change
+      var entity = new Entity(name.getText(), aliasNames);
+
+      if (_entity.equals(entity)) {
         this.viewMode();
         return;
       }
 
       // update the relationship data
-      EventBus.getDefault().post(new DoEntityUpdate(_entity, relationship));
+      EventBus.getDefault().post(new DoEntityUpdate(_entity, entity));
 
       // update the relationship
-      this._entity = new Entity(name.getText(), Set.of());
+      this._entity = new Entity(name.getText(), aliasNames);
 
       // go back to view mode
       this.viewMode();
     });
     this.getChildren().clear();
-    this.getChildren().addAll(name, correlates, gap, btn_cancel, btn_save);
+    this.getChildren().addAll(name, aliases, gap, btn_cancel, btn_save);
 
   }
 }

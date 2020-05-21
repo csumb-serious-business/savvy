@@ -10,13 +10,18 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.entity.events.EntitiesNamesUpdated;
+import savvy.core.entity.Entity;
+import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactCreate;
-import savvy.core.relationship.events.RelationshipsNamesUpdated;
+import savvy.core.relationship.Relationship;
+import savvy.core.relationship.events.RelationshipsRead;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Controller for the Fact Creation view
@@ -36,11 +41,11 @@ public class FactCreateController implements Initializable {
    * saves a fact
    */
   public void save_action() {
-    var subject = _subject.getText();
-    var relationship = _relationship.getText();
-    var object = _object.getText();
+    var s = new Entity(_subject.getText(), Set.of());
+    var r = new Relationship(_relationship.getText(), Set.of());
+    var o = new Entity(_object.getText(), Set.of());
 
-    var fact = new Fact(subject, relationship, object);
+    var fact = new Fact(s, r, o);
     log.info("save fact: {}", fact);
     EventBus.getDefault().post(new DoFactCreate(fact));
   }
@@ -49,11 +54,12 @@ public class FactCreateController implements Initializable {
     EventBus.getDefault().register(this);
   }
 
-
-  //=== event listeners =========================================================================\\
-
-  // app.entities -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
+  /**
+   * updates the autocomplete filter
+   *
+   * @param entities to use for the suggestions
+   */
+  private void updateEntitiesAutocomplete(Collection<Entity> entities) {
     // clear old bindings
     if (_sb != null) {
       _sb.dispose();
@@ -63,18 +69,39 @@ public class FactCreateController implements Initializable {
       _ob.dispose();
     }
 
-    _sb = TextFields.bindAutoCompletion(_subject, ev.names);
-    _ob = TextFields.bindAutoCompletion(_object, ev.names);
+    var names = entities.stream().map(Entity::getName).sorted().collect(Collectors.toList());
+    _sb = TextFields.bindAutoCompletion(_subject, names);
+    _ob = TextFields.bindAutoCompletion(_object, names);
+
   }
 
-  // app.relationships -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsNamesUpdated ev) {
-
+  /**
+   * updates the autocomplete filter
+   *
+   * @param relationships to use for the suggestions
+   */
+  private void updateRelationshipsAutocomplete(Collection<Relationship> relationships) {
     // clear old binding
     if (_rb != null) {
       _rb.dispose();
     }
 
-    _rb = TextFields.bindAutoCompletion(_relationship, ev.names);
+    // todo -- should be relationship and all correlates [MBR]
+    var rels =
+      relationships.stream().map(Relationship::getName).sorted().collect(Collectors.toList());
+
+    _rb = TextFields.bindAutoCompletion(_relationship, rels);
+  }
+
+  //=== event listeners =========================================================================\\
+
+  // entities read -> update entities autocomplete
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
+    updateEntitiesAutocomplete(ev.entities);
+  }
+
+  // relationships read -> update relationships autocomplete
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
+    updateRelationshipsAutocomplete(ev.relationships);
   }
 }

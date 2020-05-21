@@ -9,14 +9,16 @@ import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
+import savvy.core.relationship.events.DoRelationshipUpdate;
+import savvy.core.relationship.events.DoRelationshipsFilter;
 import savvy.core.relationship.events.DoRelationshipsRead;
-import savvy.core.relationship.events.RelationshipsNamesUpdated;
+import savvy.core.relationship.events.RelationshipUpdated;
+import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,33 +29,15 @@ public class Relationships {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   private final Set<Relationship> _items;
-  private final Set<String> _names;
-  private final Map<String, String> _correlates;
 
   private EmbeddedNeo4j _db;
 
   public Relationships() {
     _items = new HashSet<>();
-    _names = new HashSet<>();
-    _correlates = new HashMap<>();
   }
 
   /**
-   * @return a sorted list of names among all relationships
-   */
-  public List<String> getNames() {
-    return _names.stream().sorted().collect(Collectors.toList());
-  }
-
-  /**
-   * fires a names updated notification for listeners
-   */
-  private void notifyNamesUpdated() {
-    EventBus.getDefault().post(new RelationshipsNamesUpdated(getNames()));
-  }
-
-  /**
-   * iniltializes this with a given db
+   * initializes this with a given db
    *
    * @param db the db to use
    */
@@ -63,12 +47,7 @@ public class Relationships {
     // register with event bus
     EventBus.getDefault().register(this);
 
-    var relationships = _db.readAllRelationships();
-
-    // todo this is a stop-gap for full-fledged relationships
-    _names.addAll(relationships);
-    notifyNamesUpdated();
-
+    refresh();
   }
 
   /**
@@ -78,84 +57,84 @@ public class Relationships {
    */
   public void refresh() {
     _items.clear();
-    _names.clear();
-    _correlates.clear();
+    _items.addAll(_db.readAllRelationships());
 
-    _names.addAll(_db.readAllRelationships());
-    notifyNamesUpdated();
+    var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 
   /**
-   * adds a relationship by name
+   * updates a particular relationship in the db
+   * broadcasts the change on the event bus
    *
-   * @param name the relationship's name
+   * @param previous previous version of the Relationship
+   * @param current  current version of the Relationship
    */
-  public void add(String name) {
-    // todo -- stop-gap
-    if (_names.contains(name)) {
+  private void relationshipUpdate(Relationship previous, Relationship current) {
+    if (previous.equals(current)) {
       return;
     }
-    _names.add(name);
-    notifyNamesUpdated();
+
+    if (!previous.equals(current)) {
+      _db.updateRelationship(previous, current);
+    }
+
+    EventBus.getDefault().post(new RelationshipUpdated(previous, current));
   }
 
   /**
-   * updates an relationship, given a previous name and a current name
+   * broadcasts a filtered copy of contained Relationship items
+   * on the event bus
    *
-   * @param previous the relationship name to change from
-   * @param current  the relationship name to change to
+   * @param filter the string filter to match against
    */
-  public void update(String previous, String current) {
-    // todo -- stop-gap
-    var changed = false;
-    if (_names.contains(previous)) {
-      _names.remove(previous);
-      changed = true;
-    }
+  private void relationshipsFilter(String filter) {
+    List<Relationship> relationships =
+      _items.stream().filter(i -> i.getName().contains(filter)).sorted()
+        .collect(Collectors.toList());
 
-    if (!_names.contains(current)) {
-      _names.add(current);
-      changed = true;
-    }
+    EventBus.getDefault().post(new RelationshipsFiltered(relationships));
 
-    if (changed) {
-      notifyNamesUpdated();
-    }
   }
+
+
 
   //=== event listeners =========================================================================\\
-
+  //--- DOs -------------------------------------------------------------------------------------\\
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipsRead ev) {
-    Set<String> relNames;
-
-    if (ev.filter.equals("")) {
-      relNames = _db.readAllRelationships();
-    } else {
-      relNames = _db.readMatchingRelationships(ev.filter);
-    }
-
-    _items.clear();
-    var toAdd =
-      relNames.stream().map(n -> new Relationship(n, Set.of())).collect(Collectors.toSet());
-    _items.addAll(toAdd);
-
-    EventBus.getDefault().post(new RelationshipsRead(_items));
+    refresh();
   }
 
-  // fact created -> add
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipsFilter ev) {
+    relationshipsFilter(ev.filter);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipUpdate ev) {
+    relationshipUpdate(ev.previous, ev.current);
+  }
+
+
+  //--- ONs -------------------------------------------------------------------------------------\\
+  // fact created -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
-    add(ev.fact.getRelationship());
+    refresh();
   }
 
-  // fact updated -> update
+  // fact updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
-    update(ev.previous.getRelationship(), ev.current.getRelationship());
+    refresh();
   }
 
   // fact deleted -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
     refresh();
   }
+
+  // relationship updated -> refresh
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipUpdated ev) {
+    refresh();
+  }
+
 
 
 }

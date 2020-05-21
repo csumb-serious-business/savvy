@@ -13,14 +13,16 @@ import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.io.fs.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
+import savvy.core.relationship.Relationship;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -33,10 +35,12 @@ public class EmbeddedNeo4j {
   private static final File databaseDirectory = new File("target/savvy-db");
   private static final Label ENTITY_LABEL = Label.label("Entity");
   private static final String NAME = "name";
+  private static final String ALIASES = "aliases";
+  private static final String CORRELATES = "correlates";
   private static final String CYPHER_MERGE =
     String.format("MERGE (n:%1$s {%2$s: $%2$s}) RETURN n", ENTITY_LABEL, NAME);
 
-  private final Logger log = LoggerFactory.getLogger(this.getClass());
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   private GraphDatabaseService _db;
   private DatabaseManagementService _dbms;
@@ -138,22 +142,30 @@ public class EmbeddedNeo4j {
    * @param relationship the relationship between the subject and object
    * @param object       the object of the fact
    */
-  public void createFact(String subject, String relationship, String object) {
+  public void createFact(Entity subject, Relationship relationship, Entity object) {
     createEntity(subject);
     createEntity(object);
 
     try (var tx = _db.beginTx()) {
-      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
-      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject.getName());
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object.getName());
 
       var rel = subNode.createRelationshipTo(objNode, RelTypes.f2_1);
-      rel.setProperty(NAME, relationship);
+      rel.setProperty(NAME, relationship.getName());
+      // todo add correlates [MBR]
+      //      rel.setProperty(CORRELATES, relationship.getCorrelates());
+
 
       tx.commit();
     }
 
   }
 
+  /**
+   * add a fact to the database
+   *
+   * @param fact the fact to add
+   */
   public void createFact(Fact fact) {
     createFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
   }
@@ -162,14 +174,15 @@ public class EmbeddedNeo4j {
    * remove a fact from the database
    * note: if an entity has no remaining facts, it will be removed
    */
-  public void deleteFact(String subject, String relationship, String object) {
+  public void deleteFact(Entity subject, Relationship relationship, Entity object) {
     try (var tx = _db.beginTx()) {
 
       // find & delete the relationship between subject and object
-      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject);
-      var objNode = tx.findNode(ENTITY_LABEL, NAME, object);
+      var subNode = tx.findNode(ENTITY_LABEL, NAME, subject.getName());
+      var objNode = tx.findNode(ENTITY_LABEL, NAME, object.getName());
       subNode.getRelationships(Direction.OUTGOING, RelTypes.f2_1).forEach(rel -> {
-        if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME).equals(relationship)) {
+        if (rel.getEndNode().equals(objNode) && rel.getProperty(NAME)
+          .equals(relationship.getName())) {
           rel.delete();
         }
       });
@@ -188,6 +201,11 @@ public class EmbeddedNeo4j {
     }
   }
 
+  /**
+   * Delete a fact from the database
+   *
+   * @param fact the fact to delete
+   */
   public void deleteFact(Fact fact) {
     deleteFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
   }
@@ -256,7 +274,8 @@ public class EmbeddedNeo4j {
     var r = rel.getProperty(NAME).toString();
     var s = rel.getStartNode().getProperty(NAME).toString();
     var o = rel.getEndNode().getProperty(NAME).toString();
-    return new Fact(s, r, o);
+    return new Fact(new Entity(s, Set.of()), new Relationship(r, Set.of()),
+      new Entity(o, Set.of()));
   }
 
 
@@ -267,15 +286,33 @@ public class EmbeddedNeo4j {
    * adds an entity to the database if it did not exist yet
    * note: it seems the fist call to this takes some time to execute
    *
-   * @param name the name of the entity to create
-   * @return the node holding the new/already-existing entity
+   * @param entity the entity to create
    */
-  private Node createEntity(String name) {
+  public void createEntity(Entity entity) {
     try (var tx = _db.beginTx()) {
-      Map<String, Object> params = Map.of(NAME, name);
+      var params = new HashMap<String, Object>();
+      params.put(NAME, entity.getName());
+      params.put(ALIASES, entity.getAliases());
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
       tx.commit();
-      return result;
+      // return result;
+    }
+  }
+
+  /**
+   * update an Entity in the database
+   *
+   * @param previous the previous version of the Entity
+   * @param current  the current version of the Entity
+   */
+  public void updateEntity(Entity previous, Entity current) {
+    try (var tx = _db.beginTx()) {
+      var pNode = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
+      pNode.setProperty(NAME, current.getName());
+
+      // todo -- add aliases [MBR]
+
+      tx.commit();
     }
   }
 
@@ -284,69 +321,58 @@ public class EmbeddedNeo4j {
    *
    * @return the entities
    */
-  public Set<String> readAllEntities() {
-    var entities = new TreeSet<String>();
+  public Set<Entity> readAllEntities() {
+    var entities = new TreeSet<Entity>();
     try (var tx = _db.beginTx()) {
       tx.findNodes(ENTITY_LABEL).stream()
-        .forEach(n -> entities.add(n.getProperty(NAME).toString()));
+        .forEach(n -> entities.add(new Entity(n.getProperty(NAME).toString(), Set.of())));
     }
 
     return entities;
   }
 
-  /**
-   * Travers the graph collecting all entities
-   * that match a given name and return an entity for each
-   *
-   * @param filter the name of the entity to lookup
-   * @return a set of Entities corresponding to the entities
-   * found in the traversal
-   */
-  public Set<String> readMatchingEntities(String filter) {
-    // from a list of all facts
-    // get those that have a participating entity that matches the filter
-    // and add them to the set
-    return readAllFacts().stream().map(Fact::getEntities).flatMap(Set::stream)
-      .filter(f -> f.toLowerCase().contains(filter.toLowerCase())).collect(Collectors.toSet());
-
-  }
-
   //--- relationships ---------------------------------------------------------------------------\\
 
   /**
-   * Gathers a set of all the relationships defined within the database
+   * Gathers a set of all relationships whithin the database
    *
    * @return the relationships
    */
-  public Set<String> readAllRelationships() {
-    var relationships = new TreeSet<String>();
-    readAllFacts().forEach(f -> {
-      relationships.add(f.getRelationship());
-      //      log.info("f: {}", f);
-    });
+  public Set<Relationship> readAllRelationships() {
+    var relationships = new HashSet<Relationship>();
+    readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
+
     return relationships;
   }
 
-
   /**
-   * Traverse the graph collecting all relationships
-   * that match a given name and return a relationship for each
+   * update a relationship in the database
    *
-   * @param filter the name of the relationship to lookup
-   * @return a set of Relationship corresponding to the relationships
-   * found in the traversal
+   * @param previous the previous version of the relationship
+   * @param current  the current version of the relationship
    */
-  public Set<String> readMatchingRelationships(String filter) {
+  public void updateRelationship(Relationship previous, Relationship current) {
 
-    // from a list of all facts
-    // get those that contain a relationship name matching the filter
-    // and add them the the set
-    return readAllFacts().stream()
-      .filter(f -> f.getRelationship().toLowerCase().contains(filter.toLowerCase()))
-      .map(Fact::getRelationship).collect(Collectors.toSet());
+    var relationships = readAllRelationships().stream().filter(i -> i.equals(previous));
+    try (var tx = _db.beginTx()) {
+      // all facts
+      tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
+        var paths = tx.traversalDescription().depthFirst().relationships(RelTypes.f2_1)
+          .evaluator(Evaluators.excludeStartPosition()).traverse(n);
+
+        for (var path : paths) {
+          var rel = path.lastRelationship();
+          var rName = rel.getProperty(NAME).toString();
+          if (rName.equals(previous.getName())) {
+            rel.setProperty(NAME, current.getName());
+            // todo -- correlates [MBR]
+          }
+        }
+      });
+
+      tx.commit();
+    }
   }
-
-
 
   // describes the types of relationships within the database
   private enum RelTypes implements RelationshipType {
