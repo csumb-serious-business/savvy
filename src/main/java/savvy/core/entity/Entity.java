@@ -3,6 +3,7 @@ package savvy.core.entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -21,6 +22,13 @@ public class Entity implements Comparable<Entity> {
   public Entity(String name, Set<String> aliases) {
     this.name = name;
     this.aliases = aliases;
+  }
+
+  public Set<String> getIdentifiers() {
+    var identifiers = new HashSet<>(this.aliases);
+    identifiers.add(name);
+
+    return identifiers;
   }
 
   @Override public String toString() {

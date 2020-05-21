@@ -2,18 +2,19 @@ package savvy.core.entity.events;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.entity.Entity;
 
 import java.util.List;
 
 /**
- * fired upon app's entities' names list update
+ * fired upon return of entities from the DB
  */
-public final class EntitiesNamesUpdated {
-  public final List<String> names;
+public final class EntitiesFiltered {
+  public final List<Entity> entities;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  public EntitiesNamesUpdated(List<String> entities) {
+  public EntitiesFiltered(List<Entity> entities) {
     log.info("entities: {}", entities.size());
-    this.names = entities;
+    this.entities = entities;
   }
 }

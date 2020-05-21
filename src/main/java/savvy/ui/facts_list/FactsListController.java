@@ -11,13 +11,16 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.entity.events.EntitiesNamesUpdated;
+import savvy.core.entity.Entity;
+import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactsRead;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +47,19 @@ public class FactsListController implements Initializable {
 
   }
 
+  private void updateEntitiesAutocomplete(Collection<Entity> entities) {
+    // clear old bindings
+    if (_fb != null) {
+      _fb.dispose();
+    }
+
+    var identifiers = entities.stream().map(Entity::getIdentifiers).flatMap(Set::stream).sorted()
+      .collect(Collectors.toList());
+
+    _fb = TextFields.bindAutoCompletion(_filter, identifiers);
+
+  }
+
 
   //=== event listeners =========================================================================\\
 
@@ -59,12 +75,8 @@ public class FactsListController implements Initializable {
   }
 
   // entities names updated -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
-    // dispose old autocomplete binding if it exists
-    if (_fb != null) {
-      _fb.dispose();
-    }
-    _fb = TextFields.bindAutoCompletion(_filter, ev.names);
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
+    updateEntitiesAutocomplete(ev.entities);
   }
 
   // fact created -> add item to facts list

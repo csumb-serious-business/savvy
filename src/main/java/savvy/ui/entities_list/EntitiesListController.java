@@ -12,12 +12,14 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
-import savvy.core.entity.events.EntitiesNamesUpdated;
+import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class EntitiesListController implements Initializable {
@@ -33,7 +35,19 @@ public class EntitiesListController implements Initializable {
     EventBus.getDefault().post(new EntitiesFilterAction(filter));
   }
 
-  private void refresh(List<Entity> entities) {
+  private void updateAutocomplete(Collection<Entity> entities) {
+    // dispose old autocomplete binding if it exists
+    if (_fb != null) {
+      _fb.dispose();
+    }
+
+    var identifiers = entities.stream().map(Entity::getIdentifiers).flatMap(Set::stream).sorted()
+      .collect(Collectors.toList());
+
+    _fb = TextFields.bindAutoCompletion(_filter, identifiers);
+  }
+
+  private void updateEntitiesLV(List<Entity> entities) {
     lv_entities.getItems().clear();
     List<EntityItemView> layouts =
       entities.stream().map(it -> new EntityItemView(it, lv_entities)).collect(Collectors.toList());
@@ -45,21 +59,15 @@ public class EntitiesListController implements Initializable {
   }
 
   //=== event listeners =========================================================================\\
-
-  // entities names updated -> autocomplete list
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesNamesUpdated ev) {
-
-    if (_fb != null) {
-      // dispose old autocomplete binding if it exists
-      _fb.dispose();
-    }
-    _fb = TextFields.bindAutoCompletion(_filter, ev.names);
-  }
-
+  // entities read -> changes autocomplete & list view of entities
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
-    refresh(ev.entities);
+    updateAutocomplete(ev.entities);
+    updateEntitiesLV(ev.entities);
   }
 
-
+  // entities filtered -> changes list view of entities
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesFiltered ev) {
+    updateEntitiesLV(ev.entities);
+  }
 
 }

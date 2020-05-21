@@ -18,7 +18,7 @@ import savvy.core.fact.Fact;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -34,6 +34,7 @@ public class EmbeddedNeo4j {
   private static final File databaseDirectory = new File("target/savvy-db");
   private static final Label ENTITY_LABEL = Label.label("Entity");
   private static final String NAME = "name";
+  private static final String ALIASES = "aliases";
   private static final String CYPHER_MERGE =
     String.format("MERGE (n:%1$s {%2$s: $%2$s}) RETURN n", ENTITY_LABEL, NAME);
 
@@ -140,8 +141,8 @@ public class EmbeddedNeo4j {
    * @param object       the object of the fact
    */
   public void createFact(Entity subject, String relationship, Entity object) {
-    createEntity(subject.getName());
-    createEntity(object.getName());
+    createEntity(subject);
+    createEntity(object);
 
     try (var tx = _db.beginTx()) {
       var subNode = tx.findNode(ENTITY_LABEL, NAME, subject.getName());
@@ -268,15 +269,16 @@ public class EmbeddedNeo4j {
    * adds an entity to the database if it did not exist yet
    * note: it seems the fist call to this takes some time to execute
    *
-   * @param name the name of the entity to create
-   * @return the node holding the new/already-existing entity
+   * @param entity the entity to create
    */
-  public void createEntity(String name) {
+  public void createEntity(Entity entity) {
     try (var tx = _db.beginTx()) {
-      Map<String, Object> params = Map.of(NAME, name);
+      var params = new HashMap<String, Object>();
+      params.put(NAME, entity.getName());
+      params.put(ALIASES, entity.getAliases());
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
       tx.commit();
-      //      return result;
+      // return result;
     }
   }
 
@@ -302,24 +304,6 @@ public class EmbeddedNeo4j {
     }
 
     return entities;
-  }
-
-  /**
-   * Travers the graph collecting all entities
-   * that match a given name and return an entity for each
-   *
-   * @param filter the name of the entity to lookup
-   * @return a set of Entities corresponding to the entities
-   * found in the traversal
-   */
-  public Set<Entity> readMatchingEntities(String filter) {
-    // from a list of all facts
-    // get those that have a participating entity that matches the filter
-    // and add them to the set
-    return readAllFacts().stream().map(Fact::getEntities).flatMap(Set::stream)
-      .filter(f -> f.getName().toLowerCase().contains(filter.toLowerCase()))
-      .collect(Collectors.toSet());
-
   }
 
   //--- relationships ---------------------------------------------------------------------------\\
