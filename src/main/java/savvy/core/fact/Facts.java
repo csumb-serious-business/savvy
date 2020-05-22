@@ -74,11 +74,11 @@ public class Facts {
     if (ev.filter.equals("")) {
       _items = _db.readAllFacts();
     } else {
+      //
       _items = _db.readRelatedFacts(ev.filter);
     }
 
     EventBus.getDefault().post(new FactsRead(this));
   }
-
 
 }

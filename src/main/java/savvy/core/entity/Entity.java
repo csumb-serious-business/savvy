@@ -24,6 +24,11 @@ public class Entity implements Comparable<Entity> {
     this.aliases = aliases;
   }
 
+  public boolean hasAlias(String alias) {
+    return aliases.contains(alias);
+  }
+
+
   /**
    * @return a set of all identifiers for this Entity
    * including its authoritative name and all its aliases

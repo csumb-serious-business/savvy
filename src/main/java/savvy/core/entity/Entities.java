@@ -36,6 +36,11 @@ public class Entities {
     _items = new HashSet<>();
   }
 
+  // todo -- when no dupes allowed, return a single entity
+  public List<Entity> getEntityWithAlias(String alias) {
+    return _items.stream().filter(i -> i.hasAlias(alias)).collect(Collectors.toList());
+  }
+
   /**
    * initializes this with a given db
    *
@@ -89,8 +94,14 @@ public class Entities {
    * @param filter the string filter to match against
    */
   private void entitiesFilter(String filter) {
-    List<Entity> entities = _items.stream().filter(i -> i.getName().contains(filter)).sorted()
-      .collect(Collectors.toList());
+    var entities = List.<Entity>of();
+    if (filter.equals("")) {
+      entities = _items.stream().sorted().collect(Collectors.toList());
+    } else {
+
+      entities =
+        _items.stream().filter(i -> i.hasAlias(filter)).sorted().collect(Collectors.toList());
+    }
     EventBus.getDefault().post(new EntitiesFiltered(entities));
   }
 
@@ -105,7 +116,6 @@ public class Entities {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntityUpdate ev) {
-    // entity should update itself
     entityUpdate(ev.previous, ev.current);
   }
 
