@@ -273,9 +273,11 @@ public class EmbeddedNeo4j {
     var rel = path.lastRelationship();
     var r = rel.getProperty(NAME).toString();
     var s = rel.getStartNode().getProperty(NAME).toString();
+    var sa = rel.getStartNode().getProperty(ALIASES).toString();
     var o = rel.getEndNode().getProperty(NAME).toString();
-    return new Fact(new Entity(s, Set.of()), new Relationship(r, Set.of()),
-      new Entity(o, Set.of()));
+    var oa = rel.getEndNode().getProperty(ALIASES).toString();
+    return new Fact(new Entity(s, Set.of(sa)), new Relationship(r, Set.of()),
+      new Entity(o, Set.of(oa)));
   }
 
 
@@ -292,8 +294,8 @@ public class EmbeddedNeo4j {
     try (var tx = _db.beginTx()) {
       var params = new HashMap<String, Object>();
       params.put(NAME, entity.getName());
-      params.put(ALIASES, entity.getAliases());
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
+      result.setProperty(ALIASES, Utilities.serialize(entity.getAliases()));
       tx.commit();
       // return result;
     }
@@ -306,13 +308,26 @@ public class EmbeddedNeo4j {
    * @param current  the current version of the Entity
    */
   public void updateEntity(Entity previous, Entity current) {
-    try (var tx = _db.beginTx()) {
-      var pNode = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
-      pNode.setProperty(NAME, current.getName());
+    var ca = current.getAliases();
+    String[] aliases = ca.toArray(new String[0]);
 
-      // todo -- add aliases [MBR]
+    // same authoritative name -> merge them otherwise rename
+    if (previous.getName().equals(current.getName())) {
+      try (var tx = _db.beginTx()) {
+        var entity = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
 
-      tx.commit();
+        entity.setProperty(ALIASES, aliases);
+
+        tx.commit();
+      }
+    } else {
+      try (var tx = _db.beginTx()) {
+        var pNode = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
+        pNode.setProperty(NAME, current.getName());
+        pNode.setProperty(ALIASES, aliases);
+
+        tx.commit();
+      }
     }
   }
 
@@ -324,8 +339,12 @@ public class EmbeddedNeo4j {
   public Set<Entity> readAllEntities() {
     var entities = new TreeSet<Entity>();
     try (var tx = _db.beginTx()) {
-      tx.findNodes(ENTITY_LABEL).stream()
-        .forEach(n -> entities.add(new Entity(n.getProperty(NAME).toString(), Set.of())));
+      tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
+        var name = n.getProperty(NAME).toString();
+        var aliases = Utilities.deserialize((byte[]) n.getProperty(ALIASES));
+        entities.add(new Entity(name, aliases));
+        log.info("reading -- name: {}, aliases: {}", name, aliases);
+      });
     }
 
     return entities;
