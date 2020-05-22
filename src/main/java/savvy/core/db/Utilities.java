@@ -27,15 +27,13 @@ public class Utilities {
     return baos.toByteArray();
   }
 
-  static Set<String> deserialize(byte[] bytes) {
+  @SuppressWarnings("unchecked") static Set<String> deserialize(byte[] bytes) {
     var bais = new ByteArrayInputStream(bytes);
 
-
-    Set<String> result = null;
     try {
 
       try (var ois = new ObjectInputStream(bais)) {
-        result = ((Set<String>) ois.readObject());
+        return (Set<String>) ois.readObject();
       } catch (ClassNotFoundException e) {
         log.error("class not found -- ", e);
       }
@@ -43,7 +41,7 @@ public class Utilities {
     } catch (IOException e) {
       log.error("IO expception -- ", e);
     }
-    return result;
+    return Set.of();
   }
 
 }

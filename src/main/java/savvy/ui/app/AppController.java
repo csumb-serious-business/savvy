@@ -99,7 +99,7 @@ public class AppController implements Initializable {
 
   // facts filter submitted -> dispatch DoRelatedFactsRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsFilterAction ev) {
-    var matches = _entities.getEntityWithAlias(ev.filter);
+    var matches = _entities.getEntityWithIdentifier(ev.filter);
     log.info("matches: {}", matches);
 
     if (matches.size() > 0) {

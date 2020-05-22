@@ -17,6 +17,7 @@ import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,8 +38,13 @@ public class Entities {
   }
 
   // todo -- when no dupes allowed, return a single entity
-  public List<Entity> getEntityWithAlias(String alias) {
-    return _items.stream().filter(i -> i.hasAlias(alias)).collect(Collectors.toList());
+  public static List<Entity> getEntityWithIdentifier(Collection<Entity> entities,
+    String identifier) {
+    return entities.stream().filter(i -> i.hasIdentifier(identifier)).collect(Collectors.toList());
+  }
+
+  public List<Entity> getEntityWithIdentifier(String alias) {
+    return Entities.getEntityWithIdentifier(_items, alias);
   }
 
   /**
