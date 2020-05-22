@@ -3,6 +3,7 @@ package savvy.core.relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class Relationship implements Comparable<Relationship> {
@@ -43,5 +44,18 @@ public class Relationship implements Comparable<Relationship> {
 
   @Override public int compareTo(Relationship o) {
     return this.toString().compareTo(o.toString());
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (!(o instanceof Relationship))
+      return false;
+    Relationship that = (Relationship) o;
+    return name.equals(that.name) && correlates.equals(that.correlates);
+  }
+
+  @Override public int hashCode() {
+    return Objects.hash(name, correlates);
   }
 }

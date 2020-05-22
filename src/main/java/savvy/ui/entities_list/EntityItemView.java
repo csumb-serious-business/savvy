@@ -99,7 +99,8 @@ public class EntityItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
       var aliasNames = aliases.getChildren().stream().filter(TextField.class::isInstance)
-        .map(a -> ((TextField) a).getText()).collect(Collectors.toSet());
+        .map(a -> ((TextField) a).getText()).filter(s -> s.length() > 0)
+        .collect(Collectors.toSet());
 
 
       // go straight to view-mode if no change
