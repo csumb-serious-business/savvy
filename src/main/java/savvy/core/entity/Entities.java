@@ -85,11 +85,7 @@ public class Entities {
       return;
     }
 
-    if (!previous.equals(current)) {
-      _db.updateEntity(previous, current);
-    }
-
-    _db.createEntity(current);
+    _db.updateEntity(previous, current);
 
     EventBus.getDefault().post(new EntityUpdated(previous, current));
   }

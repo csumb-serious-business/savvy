@@ -308,15 +308,15 @@ public class EmbeddedNeo4j {
    * @param current  the current version of the Entity
    */
   public void updateEntity(Entity previous, Entity current) {
-    var ca = current.getAliases();
-    String[] aliases = ca.toArray(new String[0]);
+
+
 
     // same authoritative name -> merge them otherwise rename
     if (previous.getName().equals(current.getName())) {
       try (var tx = _db.beginTx()) {
         var entity = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
 
-        entity.setProperty(ALIASES, aliases);
+        entity.setProperty(ALIASES, Utilities.serialize(current.getAliases()));
 
         tx.commit();
       }
@@ -324,7 +324,7 @@ public class EmbeddedNeo4j {
       try (var tx = _db.beginTx()) {
         var pNode = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
         pNode.setProperty(NAME, current.getName());
-        pNode.setProperty(ALIASES, aliases);
+        pNode.setProperty(ALIASES, Utilities.serialize(current.getAliases()));
 
         tx.commit();
       }
