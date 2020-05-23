@@ -75,9 +75,7 @@ public class Relationships {
       return;
     }
 
-    if (!previous.equals(current)) {
-      _db.updateRelationship(previous, current);
-    }
+    _db.updateRelationship(previous, current);
 
     EventBus.getDefault().post(new RelationshipUpdated(previous, current));
   }

@@ -110,9 +110,8 @@ public class FactCreateController implements Initializable {
       _rb.dispose();
     }
 
-    // todo -- should be relationship and all correlates [MBR]
-    var rels =
-      relationships.stream().map(Relationship::getName).sorted().collect(Collectors.toList());
+    var rels = relationships.stream().map(Relationship::allForms).flatMap(Set::stream).sorted()
+      .collect(Collectors.toList());
 
     _rb = TextFields.bindAutoCompletion(_relationship, rels);
   }

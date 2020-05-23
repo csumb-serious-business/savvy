@@ -1,12 +1,14 @@
 package savvy.core.relationship;
 
+import java.io.Serializable;
+
 /**
  * represents a mapping between an outgoing and incoming relationship
  * this is required because some relationships have duplicate names
  * between their counterpart pairs, which is impossible to model with
  * a plain hashmap
  */
-public class Correlate {
+public class Correlate implements Serializable {
   public final String outgoing;
   public final String incoming;
 

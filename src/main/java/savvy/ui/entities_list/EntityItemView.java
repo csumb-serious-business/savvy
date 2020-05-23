@@ -41,11 +41,11 @@ public class EntityItemView extends HBox {
    * creates & wires the layout for this item's view mode
    */
   private void viewMode() {
-    var name = new Label();
-    name.setText(_entity.getName());
+    var lbl_name = new Label();
+    lbl_name.setText(_entity.getName());
 
-    var aliases = new Label();
-    aliases.setText(String.join(", ", _entity.getAliases()));
+    var lbl_aliases = new Label();
+    lbl_aliases.setText(String.join(", ", _entity.getAliases()));
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -59,7 +59,7 @@ public class EntityItemView extends HBox {
     btn_edit.setText("Edit");
     btn_edit.setOnAction(ev -> this.editMode());
     this.getChildren().clear();
-    this.getChildren().addAll(name, aliases, gap, btn_edit);
+    this.getChildren().addAll(lbl_name, lbl_aliases, gap, btn_edit);
   }
 
   /**
@@ -74,15 +74,15 @@ public class EntityItemView extends HBox {
     name.setMaxWidth(width);
 
     // for each alias, add a text field
-    var aliases = new HBox();
+    var hb_aliases = new HBox();
     _entity.getAliases().forEach(a -> {
       var field = new TextField();
       field.setText(a);
-      aliases.getChildren().add(field);
+      hb_aliases.getChildren().add(field);
     });
 
     // add a blank text field for new aliases
-    aliases.getChildren().add(new TextField());
+    hb_aliases.getChildren().add(new TextField());
 
     // todo when an alias box is blank and is not the last remaining,
     //  remove it when it loses focus
@@ -98,7 +98,7 @@ public class EntityItemView extends HBox {
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
-      var aliasNames = aliases.getChildren().stream().filter(TextField.class::isInstance)
+      var aliasNames = hb_aliases.getChildren().stream().filter(TextField.class::isInstance)
         .map(a -> ((TextField) a).getText()).filter(s -> s.length() > 0)
         .collect(Collectors.toSet());
 
@@ -121,7 +121,7 @@ public class EntityItemView extends HBox {
       this.viewMode();
     });
     this.getChildren().clear();
-    this.getChildren().addAll(name, aliases, gap, btn_cancel, btn_save);
+    this.getChildren().addAll(name, hb_aliases, gap, btn_cancel, btn_save);
 
   }
 }

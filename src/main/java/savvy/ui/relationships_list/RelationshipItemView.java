@@ -31,8 +31,8 @@ public class RelationshipItemView extends HBox {
 
     this.setSpacing(10);
 
-    this._relationship = relationship;
-    this._parent = parent;
+    _relationship = relationship;
+    _parent = parent;
 
     viewMode();
 
@@ -43,8 +43,15 @@ public class RelationshipItemView extends HBox {
    * creates & wires the layout for this item's view mode
    */
   private void viewMode() {
-    var label = new Label();
-    label.setText(_relationship.getName());
+    var lbl_name = new Label();
+    lbl_name.setText(_relationship.getName());
+
+    var correlates =
+      _relationship.getCorrelates().stream().map(c -> c.outgoing + " -> " + c.incoming).sorted()
+        .collect(Collectors.toList());
+    var lbl_correlates = new Label();
+    lbl_correlates.setText(String.join(", ", correlates));
+
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -58,7 +65,7 @@ public class RelationshipItemView extends HBox {
     btn_edit.setText("Edit");
     btn_edit.setOnAction(ev -> this.editMode());
     this.getChildren().clear();
-    this.getChildren().addAll(label, gap, btn_edit);
+    this.getChildren().addAll(lbl_name, lbl_correlates, gap, btn_edit);
   }
 
   /**
@@ -72,12 +79,13 @@ public class RelationshipItemView extends HBox {
     name.setText(_relationship.getName());
     name.setMaxWidth(width);
 
-    var correlates = new TextField();
+    var hb_correlates = new HBox();
 
-    var cStr = _relationship.getCorrelates().stream().map(Correlate::toString)
-      .collect(Collectors.joining(" "));
-    correlates.setText(cStr);
-    correlates.setMaxWidth(width);
+    _relationship.getCorrelates().forEach(c -> hb_correlates.getChildren().add(toUI(c)));
+
+    hb_correlates.getChildren().add(toUI(new Correlate("", "")));
+
+    hb_correlates.setMaxWidth(width);
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -90,8 +98,13 @@ public class RelationshipItemView extends HBox {
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(ev -> {
+
+      var correlates = hb_correlates.getChildren().stream().map(c -> fromUI((HBox) c))
+        .filter(c -> c.incoming.length() > 0 && c.outgoing.length() > 0)
+        .collect(Collectors.toSet());
+
       // go straight to view-mode if no change
-      var relationship = new Relationship(name.getText(), Set.of());
+      var relationship = new Relationship(name.getText(), correlates);
 
       if (_relationship.equals(relationship)) {
         this.viewMode();
@@ -108,7 +121,31 @@ public class RelationshipItemView extends HBox {
       this.viewMode();
     });
     this.getChildren().clear();
-    this.getChildren().addAll(name, correlates, gap, btn_cancel, btn_save);
+    this.getChildren().addAll(name, hb_correlates, gap, btn_cancel, btn_save);
 
+  }
+
+  private HBox toUI(Correlate correlate) {
+    var txt_out = new TextField();
+    txt_out.setText(correlate.outgoing);
+
+    var txt_in = new TextField();
+    txt_in.setText(correlate.incoming);
+
+    var label = new Label(" -> ");
+
+    var box = new HBox();
+    box.getChildren().addAll(txt_out, label, txt_in);
+    return box;
+
+  }
+
+  private Correlate fromUI(HBox box) {
+    var fields =
+      box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
+    var outgoing = ((TextField) fields.get(0)).getText();
+    var incoming = ((TextField) fields.get(1)).getText();
+
+    return new Correlate(outgoing, incoming);
   }
 }

@@ -3,6 +3,7 @@ package savvy.core.relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -26,8 +27,10 @@ public class Relationship implements Comparable<Relationship> {
    * including its authoritative name and all of its correlates
    */
   public Set<String> allForms() {
-    // todo -- add correlates [MBR]
-    return Set.of(this.getName());
+    var forms = new HashSet<String>();
+    correlates.forEach(c -> forms.addAll(Set.of(c.outgoing, c.incoming)));
+    forms.add(name);
+    return forms;
   }
 
   public String getName() {
