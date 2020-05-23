@@ -24,9 +24,11 @@ import java.util.stream.Collectors;
 
 public class EntitiesListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
-  private AutoCompletionBinding<String> _fb = null;
+
   @FXML private ListView<EntityItemView> lv_entities;
   @FXML private TextField _filter;
+
+  private AutoCompletionBinding<String> _fb = null;
 
   public void filter_action() {
     var filter = _filter.getText();

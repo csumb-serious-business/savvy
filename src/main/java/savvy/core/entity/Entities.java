@@ -17,6 +17,7 @@ import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,9 +37,13 @@ public class Entities {
     _items = new HashSet<>();
   }
 
-  // todo -- when no dupes allowed, return a single entity
-  public List<Entity> getEntityWithAlias(String alias) {
-    return _items.stream().filter(i -> i.hasAlias(alias)).collect(Collectors.toList());
+  public static List<Entity> getEntitiesWithIdentifier(Collection<Entity> entities,
+    String identifier) {
+    return entities.stream().filter(i -> i.hasIdentifier(identifier)).collect(Collectors.toList());
+  }
+
+  public List<Entity> getEntitiesWithIdentifier(String alias) {
+    return Entities.getEntitiesWithIdentifier(_items, alias);
   }
 
   /**
@@ -79,11 +84,7 @@ public class Entities {
       return;
     }
 
-    if (!previous.equals(current)) {
-      _db.updateEntity(previous, current);
-    }
-
-    _db.createEntity(current);
+    _db.updateEntity(previous, current);
 
     EventBus.getDefault().post(new EntityUpdated(previous, current));
   }
@@ -94,7 +95,7 @@ public class Entities {
    * @param filter the string filter to match against
    */
   private void entitiesFilter(String filter) {
-    var entities = List.<Entity>of();
+    List<Entity> entities;
     if (filter.equals("")) {
       entities = _items.stream().sorted().collect(Collectors.toList());
     } else {

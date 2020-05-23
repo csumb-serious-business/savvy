@@ -28,6 +28,10 @@ public class Entity implements Comparable<Entity> {
     return aliases.contains(alias);
   }
 
+  public boolean hasIdentifier(String identifier) {
+    return name.equals(identifier) || hasAlias(identifier);
+  }
+
 
   /**
    * @return a set of all identifiers for this Entity

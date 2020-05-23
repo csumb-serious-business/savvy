@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
+import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 
 import java.io.File;
@@ -152,9 +153,7 @@ public class EmbeddedNeo4j {
 
       var rel = subNode.createRelationshipTo(objNode, RelTypes.f2_1);
       rel.setProperty(NAME, relationship.getName());
-      // todo add correlates [MBR]
-      //      rel.setProperty(CORRELATES, relationship.getCorrelates());
-
+      rel.setProperty(CORRELATES, new SerDe<Correlate>().serialize(relationship.getCorrelates()));
 
       tx.commit();
     }
@@ -272,12 +271,17 @@ public class EmbeddedNeo4j {
   private Fact pathAsFact(Path path) {
     var rel = path.lastRelationship();
     var r = rel.getProperty(NAME).toString();
+    var rc = new SerDe<Correlate>().deserialize(rel.getProperty(CORRELATES));
+
+    var serde = new SerDe<String>();
     var s = rel.getStartNode().getProperty(NAME).toString();
-    var sa = rel.getStartNode().getProperty(ALIASES).toString();
+    var sa = serde.deserialize(rel.getStartNode().getProperty(ALIASES));
+
     var o = rel.getEndNode().getProperty(NAME).toString();
-    var oa = rel.getEndNode().getProperty(ALIASES).toString();
-    return new Fact(new Entity(s, Set.of(sa)), new Relationship(r, Set.of()),
-      new Entity(o, Set.of(oa)));
+    var oa = serde.deserialize(rel.getEndNode().getProperty(ALIASES));
+
+
+    return new Fact(new Entity(s, sa), new Relationship(r, rc), new Entity(o, oa));
   }
 
 
@@ -295,7 +299,7 @@ public class EmbeddedNeo4j {
       var params = new HashMap<String, Object>();
       params.put(NAME, entity.getName());
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
-      result.setProperty(ALIASES, Utilities.serialize(entity.getAliases()));
+      result.setProperty(ALIASES, new SerDe<String>().serialize(entity.getAliases()));
       tx.commit();
       // return result;
     }
@@ -308,15 +312,13 @@ public class EmbeddedNeo4j {
    * @param current  the current version of the Entity
    */
   public void updateEntity(Entity previous, Entity current) {
-    var ca = current.getAliases();
-    String[] aliases = ca.toArray(new String[0]);
 
     // same authoritative name -> merge them otherwise rename
     if (previous.getName().equals(current.getName())) {
       try (var tx = _db.beginTx()) {
         var entity = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
 
-        entity.setProperty(ALIASES, aliases);
+        entity.setProperty(ALIASES, new SerDe<String>().serialize(current.getAliases()));
 
         tx.commit();
       }
@@ -324,7 +326,7 @@ public class EmbeddedNeo4j {
       try (var tx = _db.beginTx()) {
         var pNode = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
         pNode.setProperty(NAME, current.getName());
-        pNode.setProperty(ALIASES, aliases);
+        pNode.setProperty(ALIASES, new SerDe<String>().serialize(current.getAliases()));
 
         tx.commit();
       }
@@ -341,7 +343,7 @@ public class EmbeddedNeo4j {
     try (var tx = _db.beginTx()) {
       tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
         var name = n.getProperty(NAME).toString();
-        var aliases = Utilities.deserialize((byte[]) n.getProperty(ALIASES));
+        var aliases = new SerDe<String>().deserialize((byte[]) n.getProperty(ALIASES));
         entities.add(new Entity(name, aliases));
         log.info("reading -- name: {}, aliases: {}", name, aliases);
       });
@@ -360,6 +362,7 @@ public class EmbeddedNeo4j {
   public Set<Relationship> readAllRelationships() {
     var relationships = new HashSet<Relationship>();
     readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
+    log.info("relationships: {}", relationships);
 
     return relationships;
   }
@@ -372,7 +375,6 @@ public class EmbeddedNeo4j {
    */
   public void updateRelationship(Relationship previous, Relationship current) {
 
-    var relationships = readAllRelationships().stream().filter(i -> i.equals(previous));
     try (var tx = _db.beginTx()) {
       // all facts
       tx.findNodes(ENTITY_LABEL).stream().forEach(n -> {
@@ -382,9 +384,16 @@ public class EmbeddedNeo4j {
         for (var path : paths) {
           var rel = path.lastRelationship();
           var rName = rel.getProperty(NAME).toString();
+
+          // if matching relationship
           if (rName.equals(previous.getName())) {
-            rel.setProperty(NAME, current.getName());
-            // todo -- correlates [MBR]
+            if (!previous.getName().equals(current.getName())) {
+              rel.setProperty(NAME, current.getName());
+            }
+            if (!previous.getCorrelates().equals(current.getCorrelates())) {
+              rel
+                .setProperty(CORRELATES, new SerDe<Correlate>().serialize(current.getCorrelates()));
+            }
           }
         }
       });
