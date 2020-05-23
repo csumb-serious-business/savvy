@@ -16,6 +16,7 @@ import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactCreate;
 import savvy.core.relationship.Relationship;
+import savvy.core.relationship.Relationships;
 import savvy.core.relationship.events.RelationshipsRead;
 
 import java.net.URL;
@@ -49,23 +50,29 @@ public class FactCreateController implements Initializable {
     Entity s;
 
     // subject exists -> use existent
-    var found = Entities.getEntityWithIdentifier(_entities, _subject.getText());
-    if (found.isEmpty()) {
+    var eFound = Entities.getEntitiesWithIdentifier(_entities, _subject.getText());
+    if (eFound.isEmpty()) {
       s = new Entity(_subject.getText(), Set.of());
     } else {
-      s = found.get(0);
+      s = eFound.get(0);
     }
 
+    Relationship r;
     // relationship exists -> use existent
-    var r = new Relationship(_relationship.getText(), Set.of());
+    var rFound = Relationships.getRelationshipsWithForm(_relationships, _relationship.getText());
+    if (rFound.isEmpty()) {
+      r = new Relationship(_relationship.getText(), Set.of());
+    } else {
+      r = rFound.get(0);
+    }
 
     Entity o;
     // object exists -> use existent
-    found = Entities.getEntityWithIdentifier(_entities, _object.getText());
-    if (found.isEmpty()) {
+    eFound = Entities.getEntitiesWithIdentifier(_entities, _object.getText());
+    if (eFound.isEmpty()) {
       o = new Entity(_object.getText(), Set.of());
     } else {
-      o = found.get(0);
+      o = eFound.get(0);
     }
 
     var fact = new Fact(s, r, o);

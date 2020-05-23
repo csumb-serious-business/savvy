@@ -37,14 +37,13 @@ public class Entities {
     _items = new HashSet<>();
   }
 
-  // todo -- when no dupes allowed, return a single entity
-  public static List<Entity> getEntityWithIdentifier(Collection<Entity> entities,
+  public static List<Entity> getEntitiesWithIdentifier(Collection<Entity> entities,
     String identifier) {
     return entities.stream().filter(i -> i.hasIdentifier(identifier)).collect(Collectors.toList());
   }
 
-  public List<Entity> getEntityWithIdentifier(String alias) {
-    return Entities.getEntityWithIdentifier(_items, alias);
+  public List<Entity> getEntitiesWithIdentifier(String alias) {
+    return Entities.getEntitiesWithIdentifier(_items, alias);
   }
 
   /**
@@ -96,7 +95,7 @@ public class Entities {
    * @param filter the string filter to match against
    */
   private void entitiesFilter(String filter) {
-    var entities = List.<Entity>of();
+    List<Entity> entities;
     if (filter.equals("")) {
       entities = _items.stream().sorted().collect(Collectors.toList());
     } else {

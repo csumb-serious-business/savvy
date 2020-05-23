@@ -362,6 +362,7 @@ public class EmbeddedNeo4j {
   public Set<Relationship> readAllRelationships() {
     var relationships = new HashSet<Relationship>();
     readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
+    log.info("relationships: {}", relationships);
 
     return relationships;
   }

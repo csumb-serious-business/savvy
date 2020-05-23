@@ -17,6 +17,7 @@ import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,16 @@ public class Relationships {
 
   public Relationships() {
     _items = new HashSet<>();
+  }
+
+  public static List<Relationship> getRelationshipsWithForm(Collection<Relationship> relationships,
+    String correlate) {
+    return relationships.stream().filter(r -> r.hasForm(correlate)).collect(Collectors.toList());
+
+  }
+
+  public List<Relationship> getRelationshipsWithForm(String correlate) {
+    return Relationships.getRelationshipsWithForm(_items, correlate);
   }
 
   /**
@@ -87,9 +98,14 @@ public class Relationships {
    * @param filter the string filter to match against
    */
   private void relationshipsFilter(String filter) {
-    List<Relationship> relationships =
-      _items.stream().filter(i -> i.getName().contains(filter)).sorted()
-        .collect(Collectors.toList());
+    List<Relationship> relationships;
+
+    if (filter.equals("")) {
+      relationships = _items.stream().sorted().collect(Collectors.toList());
+    } else {
+      relationships =
+        _items.stream().filter(i -> i.hasForm(filter)).sorted().collect(Collectors.toList());
+    }
 
     EventBus.getDefault().post(new RelationshipsFiltered(relationships));
 

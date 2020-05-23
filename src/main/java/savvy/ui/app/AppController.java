@@ -17,7 +17,7 @@ import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.relationship.Relationships;
-import savvy.core.relationship.events.DoRelationshipsRead;
+import savvy.core.relationship.events.DoRelationshipsFilter;
 import savvy.ui.entities_list.EntitiesFilterAction;
 import savvy.ui.facts_list.FactsFilterAction;
 import savvy.ui.relationships_list.RelationshipsFilterAction;
@@ -99,7 +99,7 @@ public class AppController implements Initializable {
 
   // facts filter submitted -> dispatch DoRelatedFactsRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsFilterAction ev) {
-    var matches = _entities.getEntityWithIdentifier(ev.filter);
+    var matches = _entities.getEntitiesWithIdentifier(ev.filter);
     log.info("matches: {}", matches);
 
     if (matches.size() > 0) {
@@ -111,7 +111,8 @@ public class AppController implements Initializable {
 
   // relationships filter submitted -> dispatch DoRelationshipsRead
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsFilterAction ev) {
-    EventBus.getDefault().post(new DoRelationshipsRead(ev.filter));
+
+    EventBus.getDefault().post(new DoRelationshipsFilter(ev.filter));
   }
 
   // entities filter submitted -> dispatch DoEntitiesRead
