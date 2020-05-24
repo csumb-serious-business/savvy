@@ -1,5 +1,7 @@
 package savvy.core.fact;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -15,12 +17,7 @@ import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.fact.events.FactsRead;
 
-import java.util.HashSet;
-import java.util.Set;
-
-/**
- * interfaces with the db
- */
+/** interfaces with the db */
 public class Facts {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
   private Set<Fact> _items;
@@ -29,7 +26,6 @@ public class Facts {
   public Facts() {
     _items = new HashSet<>();
   }
-
 
   public Set<Fact> getItems() {
     return _items;
@@ -45,15 +41,17 @@ public class Facts {
     EventBus.getDefault().register(this);
   }
 
-  //=== event listeners =========================================================================\\
+  // === event listeners =========================================================================\\
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactCreate ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoFactCreate ev) {
     var fact = ev.fact;
     _db.createFact(fact);
     EventBus.getDefault().post(new FactCreated(fact));
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactUpdate ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoFactUpdate ev) {
     if (ev.previous.equals(ev.current)) {
       return;
     }
@@ -64,13 +62,15 @@ public class Facts {
     EventBus.getDefault().post(new FactUpdated(ev.previous, ev.current));
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactDelete ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoFactDelete ev) {
     var fact = ev.fact;
     _db.deleteFact(fact);
     EventBus.getDefault().post(new FactDeleted(fact));
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoFactsRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoFactsRead ev) {
     if (ev.filter.equals("")) {
       _items = _db.readAllFacts();
     } else {
@@ -80,5 +80,4 @@ public class Facts {
 
     EventBus.getDefault().post(new FactsRead(this));
   }
-
 }

@@ -4,9 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.fact.Fact;
 
-/**
- * fired to initiate Fact update in the DB
- */
+/** fired to initiate Fact update in the DB */
 public final class DoFactUpdate {
   public final Fact previous;
   public final Fact current;

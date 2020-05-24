@@ -1,16 +1,15 @@
 package savvy.core.entity;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Objects;
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Objects;
+import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class EntityTest {
   private static final Set<String> empty_aliases = Set.of();
@@ -26,18 +25,16 @@ class EntityTest {
 
   private Entity subject;
 
-  @BeforeEach void setUp() {
+  @BeforeEach
+  void setUp() {}
 
-  }
+  @AfterEach
+  void tearDown() {}
 
-  @AfterEach void tearDown() {
-
-  }
-
-  @Test void valid() {
+  @Test
+  void valid() {
 
     subject = new Entity(name, aliases);
-
 
     assertEquals(name, subject.getName());
     assertEquals(aliases, subject.getAliases());
@@ -59,6 +56,5 @@ class EntityTest {
 
     // tautological
     assertEquals(subject.hashCode(), Objects.hash(name, aliases));
-
   }
 }

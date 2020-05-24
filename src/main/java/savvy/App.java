@@ -1,6 +1,6 @@
 package savvy;
 
-
+import java.io.IOException;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,16 +12,10 @@ import org.slf4j.LoggerFactory;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.ui.app.AppController;
 
-import java.io.IOException;
-
-/**
- * entry point for the application
- */
+/** entry point for the application */
 public class App extends Application {
   private static final EmbeddedNeo4j _db = new EmbeddedNeo4j();
   private static final EventBus events = new EventBus();
-
-
 
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -29,7 +23,8 @@ public class App extends Application {
     launch();
   }
 
-  @Override public void start(Stage stage) throws IOException {
+  @Override
+  public void start(Stage stage) throws IOException {
     // init the db
     try {
       _db.createDb(true);
@@ -48,7 +43,5 @@ public class App extends Application {
 
     // show the scene
     stage.show();
-
   }
-
 }

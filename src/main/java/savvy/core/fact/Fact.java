@@ -1,16 +1,13 @@
 package savvy.core.fact;
 
+import java.util.Objects;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.relationship.Relationship;
 
-import java.util.Objects;
-import java.util.Set;
-
-/**
- * represents a Fact that relates a particular subject entity with an object entity
- */
+/** represents a Fact that relates a particular subject entity with an object entity */
 public class Fact implements Comparable<Fact> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -24,21 +21,23 @@ public class Fact implements Comparable<Fact> {
     this.object = object;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof Fact))
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Fact)) return false;
     Fact fact = (Fact) o;
-    return subject.equals(fact.subject) && relationship.equals(fact.relationship) && object
-      .equals(fact.object);
+    return subject.equals(fact.subject)
+        && relationship.equals(fact.relationship)
+        && object.equals(fact.object);
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return Objects.hash(subject, relationship, object);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return subject.getName() + " | " + relationship.getName() + " | " + object.getName();
   }
 
@@ -58,10 +57,8 @@ public class Fact implements Comparable<Fact> {
     return Set.of(subject, object);
   }
 
-  @Override public int compareTo(Fact o) {
+  @Override
+  public int compareTo(Fact o) {
     return this.toString().compareTo(o.toString());
   }
-
 }
-
-

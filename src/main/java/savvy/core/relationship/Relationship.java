@@ -1,11 +1,10 @@
 package savvy.core.relationship;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Relationship implements Comparable<Relationship> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -32,8 +31,8 @@ public class Relationship implements Comparable<Relationship> {
   }
 
   /**
-   * @return a Set of all forms of this relationship
-   * including its authoritative name and all of its correlates
+   * @return a Set of all forms of this relationship including its authoritative name and all of its
+   *     correlates
    */
   public Set<String> allForms() {
     var forms = new HashSet<String>();
@@ -50,24 +49,26 @@ public class Relationship implements Comparable<Relationship> {
     return correlates;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "Relationship{" + "name='" + name + '\'' + ", correlates=" + correlates + '}';
   }
 
-  @Override public int compareTo(Relationship o) {
+  @Override
+  public int compareTo(Relationship o) {
     return this.toString().compareTo(o.toString());
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof Relationship))
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Relationship)) return false;
     Relationship that = (Relationship) o;
     return name.equals(that.name) && correlates.equals(that.correlates);
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return Objects.hash(name, correlates);
   }
 }

@@ -1,12 +1,11 @@
 package savvy.core.fact.events;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class FactUpdated {
   public final Fact previous;

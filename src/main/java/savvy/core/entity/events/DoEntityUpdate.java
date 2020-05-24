@@ -4,10 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 
-
-/**
- * fired to initiate updating an entity in the DB
- */
+/** fired to initiate updating an entity in the DB */
 public class DoEntityUpdate {
   public final Entity previous;
   public final Entity current;
@@ -18,6 +15,5 @@ public class DoEntityUpdate {
     log.info("entity: {} -> {}", previous, current);
     this.previous = previous;
     this.current = current;
-
   }
 }

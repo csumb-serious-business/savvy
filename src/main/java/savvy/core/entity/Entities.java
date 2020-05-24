@@ -1,5 +1,11 @@
 package savvy.core.entity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -16,16 +22,7 @@ import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * models a group of entities
- */
+/** models a group of entities */
 public class Entities {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -37,8 +34,8 @@ public class Entities {
     _items = new HashSet<>();
   }
 
-  public static List<Entity> getEntitiesWithIdentifier(Collection<Entity> entities,
-    String identifier) {
+  public static List<Entity> getEntitiesWithIdentifier(
+      Collection<Entity> entities, String identifier) {
     return entities.stream().filter(i -> i.hasIdentifier(identifier)).collect(Collectors.toList());
   }
 
@@ -61,8 +58,8 @@ public class Entities {
   }
 
   /**
-   * goes to the db to get an up-to-date version of all entities
-   * broadcasts the read event on the event bus
+   * goes to the db to get an up-to-date version of all entities broadcasts the read event on the
+   * event bus
    */
   private void refresh() {
     _items.clear();
@@ -73,11 +70,10 @@ public class Entities {
   }
 
   /**
-   * updates a particular entity in the db
-   * broadcasts the change on the event bus
+   * updates a particular entity in the db broadcasts the change on the event bus
    *
    * @param previous previous version of the Entity
-   * @param current  current version of the Entity
+   * @param current current version of the Entity
    */
   private void entityUpdate(Entity previous, Entity current) {
     if (previous.equals(current)) {
@@ -101,44 +97,50 @@ public class Entities {
     } else {
 
       entities =
-        _items.stream().filter(i -> i.hasAlias(filter)).sorted().collect(Collectors.toList());
+          _items.stream().filter(i -> i.hasAlias(filter)).sorted().collect(Collectors.toList());
     }
     EventBus.getDefault().post(new EntitiesFiltered(entities));
   }
 
-  //=== event listeners =========================================================================\\
-  //--- DOs -------------------------------------------------------------------------------------\\
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesRead ev) {
+  // === event listeners =========================================================================\\
+  // --- DOs -------------------------------------------------------------------------------------\\
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoEntitiesRead ev) {
     refresh();
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntitiesFilter ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoEntitiesFilter ev) {
     entitiesFilter(ev.filter);
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoEntityUpdate ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoEntityUpdate ev) {
     entityUpdate(ev.previous, ev.current);
   }
 
-  //--- ONs -------------------------------------------------------------------------------------\\
+  // --- ONs -------------------------------------------------------------------------------------\\
   // fact created -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactCreated ev) {
     refresh();
   }
 
   // fact updated -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactUpdated ev) {
     refresh();
   }
 
   // fact deleted -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactDeleted ev) {
     refresh();
   }
 
   // entity updated -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntityUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(EntityUpdated ev) {
     refresh();
   }
-
 }
