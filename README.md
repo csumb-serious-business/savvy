@@ -18,4 +18,5 @@ extract `savvy.zip` or `savvy.tar`
 ## run without packaging
 `gradlew clean run`
 
-
+## run tests with code coverage
+`gradlew clean test`

@@ -4,6 +4,9 @@ plugins {
 
     // javafx -- UI
     id 'org.openjfx.javafxplugin' version '0.0.8'
+
+    // jacoco -- code coverage
+    id 'jacoco'
 }
 
 javafx {
@@ -67,11 +70,21 @@ application {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacoco")
+    }
 }
 
 run {
     jvmArgs = [
-               '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED'
+            '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED'
     ]
 }
 
