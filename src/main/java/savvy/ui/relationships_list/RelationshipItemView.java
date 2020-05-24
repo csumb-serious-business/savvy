@@ -1,5 +1,7 @@
 package savvy.ui.relationships_list;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -14,12 +16,7 @@ import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipUpdate;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * controller and layout for an individual Fact Item in the FactsFilterList
- */
+/** controller and layout for an individual Fact Item in the FactsFilterList */
 public class RelationshipItemView extends HBox {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -35,23 +32,20 @@ public class RelationshipItemView extends HBox {
     _parent = parent;
 
     viewMode();
-
   }
 
-
-  /**
-   * creates & wires the layout for this item's view mode
-   */
+  /** creates & wires the layout for this item's view mode */
   private void viewMode() {
     var lbl_name = new Label();
     lbl_name.setText(_relationship.getName());
 
     var correlates =
-      _relationship.getCorrelates().stream().map(c -> c.outgoing + " -> " + c.incoming).sorted()
-        .collect(Collectors.toList());
+        _relationship.getCorrelates().stream()
+            .map(c -> c.outgoing + " -> " + c.incoming)
+            .sorted()
+            .collect(Collectors.toList());
     var lbl_correlates = new Label();
     lbl_correlates.setText(String.join(", ", correlates));
-
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -68,9 +62,7 @@ public class RelationshipItemView extends HBox {
     this.getChildren().addAll(lbl_name, lbl_correlates, gap, btn_edit);
   }
 
-  /**
-   * creates & wires the layout for this item's edit mode
-   */
+  /** creates & wires the layout for this item's edit mode */
   private void editMode() {
 
     final double width = this.widthProperty().doubleValue() / 5.0d;
@@ -97,32 +89,33 @@ public class RelationshipItemView extends HBox {
 
     var btn_save = new Button();
     btn_save.setText("Save");
-    btn_save.setOnAction(ev -> {
+    btn_save.setOnAction(
+        ev -> {
+          var correlates =
+              hb_correlates.getChildren().stream()
+                  .map(c -> fromUI((HBox) c))
+                  .filter(c -> c.incoming.length() > 0 && c.outgoing.length() > 0)
+                  .collect(Collectors.toSet());
 
-      var correlates = hb_correlates.getChildren().stream().map(c -> fromUI((HBox) c))
-        .filter(c -> c.incoming.length() > 0 && c.outgoing.length() > 0)
-        .collect(Collectors.toSet());
+          // go straight to view-mode if no change
+          var relationship = new Relationship(name.getText(), correlates);
 
-      // go straight to view-mode if no change
-      var relationship = new Relationship(name.getText(), correlates);
+          if (_relationship.equals(relationship)) {
+            this.viewMode();
+            return;
+          }
 
-      if (_relationship.equals(relationship)) {
-        this.viewMode();
-        return;
-      }
+          // update the relationship data
+          EventBus.getDefault().post(new DoRelationshipUpdate(_relationship, relationship));
 
-      // update the relationship data
-      EventBus.getDefault().post(new DoRelationshipUpdate(_relationship, relationship));
+          // update the relationship
+          this._relationship = new Relationship(name.getText(), Set.of());
 
-      // update the relationship
-      this._relationship = new Relationship(name.getText(), Set.of());
-
-      // go back to view mode
-      this.viewMode();
-    });
+          // go back to view mode
+          this.viewMode();
+        });
     this.getChildren().clear();
     this.getChildren().addAll(name, hb_correlates, gap, btn_cancel, btn_save);
-
   }
 
   private HBox toUI(Correlate correlate) {
@@ -137,12 +130,11 @@ public class RelationshipItemView extends HBox {
     var box = new HBox();
     box.getChildren().addAll(txt_out, label, txt_in);
     return box;
-
   }
 
   private Correlate fromUI(HBox box) {
     var fields =
-      box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
+        box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
     var outgoing = ((TextField) fields.get(0)).getText();
     var incoming = ((TextField) fields.get(1)).getText();
 

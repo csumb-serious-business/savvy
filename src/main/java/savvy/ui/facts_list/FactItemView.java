@@ -1,5 +1,6 @@
 package savvy.ui.facts_list;
 
+import java.util.Set;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -16,11 +17,7 @@ import savvy.core.fact.events.DoFactDelete;
 import savvy.core.fact.events.DoFactUpdate;
 import savvy.core.relationship.Relationship;
 
-import java.util.Set;
-
-/**
- * controller and layout for an individual Fact Item in the FactsFilterList
- */
+/** controller and layout for an individual Fact Item in the FactsFilterList */
 public class FactItemView extends HBox {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -36,13 +33,9 @@ public class FactItemView extends HBox {
     this._parent = parent;
 
     viewMode();
-
   }
 
-
-  /**
-   * creates & wires the layout for this item's view mode
-   */
+  /** creates & wires the layout for this item's view mode */
   private void viewMode() {
     var label = new Label();
     label.setText(_fact.toString());
@@ -53,10 +46,11 @@ public class FactItemView extends HBox {
     var btn_delete = new Button();
     btn_delete.setText("Delete");
 
-    btn_delete.setOnAction(ev -> {
-      EventBus.getDefault().post(new DoFactDelete(_fact));
-      _parent.getItems().remove(this);
-    });
+    btn_delete.setOnAction(
+        ev -> {
+          EventBus.getDefault().post(new DoFactDelete(_fact));
+          _parent.getItems().remove(this);
+        });
 
     var btn_edit = new Button();
     btn_edit.setText("Edit");
@@ -65,9 +59,7 @@ public class FactItemView extends HBox {
     this.getChildren().addAll(label, gap, btn_edit, btn_delete);
   }
 
-  /**
-   * creates & wires the layout for this item's edit mode
-   */
+  /** creates & wires the layout for this item's edit mode */
   private void editMode() {
 
     final double width = this.widthProperty().doubleValue() / 5.0d;
@@ -94,29 +86,29 @@ public class FactItemView extends HBox {
 
     var btn_save = new Button();
     btn_save.setText("Save");
-    btn_save.setOnAction(ev -> {
-      // go straight to view-mode if no change
-      var s = new Entity(subject.getText(), Set.of());
-      var r = new Relationship(relationship.getText(), Set.of());
-      var o = new Entity(object.getText(), Set.of());
-      var fact = new Fact(s, r, o);
+    btn_save.setOnAction(
+        ev -> {
+          // go straight to view-mode if no change
+          var s = new Entity(subject.getText(), Set.of());
+          var r = new Relationship(relationship.getText(), Set.of());
+          var o = new Entity(object.getText(), Set.of());
+          var fact = new Fact(s, r, o);
 
-      if (this._fact.equals(fact)) {
-        this.viewMode();
-        return;
-      }
+          if (this._fact.equals(fact)) {
+            this.viewMode();
+            return;
+          }
 
-      // update the fact data
-      EventBus.getDefault().post(new DoFactUpdate(_fact, fact));
+          // update the fact data
+          EventBus.getDefault().post(new DoFactUpdate(_fact, fact));
 
-      // update the underlying fact
-      this._fact = fact;
+          // update the underlying fact
+          this._fact = fact;
 
-      // go back to view mode
-      this.viewMode();
-    });
+          // go back to view mode
+          this.viewMode();
+        });
     this.getChildren().clear();
     this.getChildren().addAll(subject, relationship, object, gap, btn_cancel, btn_save);
-
   }
 }

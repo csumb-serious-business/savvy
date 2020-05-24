@@ -1,5 +1,11 @@
 package savvy.ui.entities_list;
 
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
@@ -14,13 +20,6 @@ import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
-
-import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EntitiesListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -48,8 +47,12 @@ public class EntitiesListController implements Initializable {
       _fb.dispose();
     }
 
-    var identifiers = entities.stream().map(Entity::getIdentifiers).flatMap(Set::stream).sorted()
-      .collect(Collectors.toList());
+    var identifiers =
+        entities.stream()
+            .map(Entity::getIdentifiers)
+            .flatMap(Set::stream)
+            .sorted()
+            .collect(Collectors.toList());
 
     _fb = TextFields.bindAutoCompletion(_filter, identifiers);
   }
@@ -62,24 +65,28 @@ public class EntitiesListController implements Initializable {
   private void updateEntitiesLV(Collection<Entity> entities) {
     lv_entities.getItems().clear();
     List<EntityItemView> layouts =
-      entities.stream().map(it -> new EntityItemView(it, lv_entities)).collect(Collectors.toList());
+        entities.stream()
+            .map(it -> new EntityItemView(it, lv_entities))
+            .collect(Collectors.toList());
     lv_entities.getItems().addAll(layouts);
   }
 
-  @Override public void initialize(URL location, ResourceBundle resources) {
+  @Override
+  public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
   }
 
-  //=== event listeners =========================================================================\\
+  // === event listeners =========================================================================\\
   // entities read -> update autocomplete & list view
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(EntitiesRead ev) {
     updateAutocomplete(ev.entities);
     updateEntitiesLV(ev.entities);
   }
 
   // entities filtered -> update list view
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesFiltered ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(EntitiesFiltered ev) {
     updateEntitiesLV(ev.entities);
   }
-
 }

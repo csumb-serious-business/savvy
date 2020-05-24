@@ -1,5 +1,7 @@
 package savvy.ui.app;
 
+import java.net.URL;
+import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.text.Text;
@@ -22,12 +24,7 @@ import savvy.ui.entities_list.EntitiesFilterAction;
 import savvy.ui.facts_list.FactsFilterAction;
 import savvy.ui.relationships_list.RelationshipsFilterAction;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
-/**
- * Controller for the application's main window
- */
+/** Controller for the application's main window */
 public class AppController implements Initializable {
   public static AppController instance;
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -40,7 +37,6 @@ public class AppController implements Initializable {
 
   @FXML private Text txt_msg;
 
-
   public AppController() {
     instance = this;
     _facts = new Facts();
@@ -49,8 +45,7 @@ public class AppController implements Initializable {
   }
 
   /**
-   * sets the embedded neo4j db
-   * this application won't run without it
+   * sets the embedded neo4j db this application won't run without it
    *
    * @param db the embedded neo4j db
    */
@@ -58,9 +53,7 @@ public class AppController implements Initializable {
     this._db = db;
   }
 
-  /**
-   * loaded action for the controller overall
-   */
+  /** loaded action for the controller overall */
   public void loaded_action() {
     // register with event bus
     EventBus.getDefault().register(this);
@@ -73,32 +66,33 @@ public class AppController implements Initializable {
     EventBus.getDefault().post(new FactsFilterAction(""));
     EventBus.getDefault().post(new RelationshipsFilterAction(""));
     EventBus.getDefault().post(new EntitiesFilterAction(""));
-
   }
 
-  @Override public void initialize(URL location, ResourceBundle resources) {
+  @Override
+  public void initialize(URL location, ResourceBundle resources) {}
 
-  }
-
-
-  //=== event listeners =========================================================================\\
+  // === event listeners =========================================================================\\
   // fact created -> message
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactCreated ev) {
     txt_msg.setText("Saved fact: " + ev.fact);
   }
 
   // fact updated -> message
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactUpdated ev) {
     txt_msg.setText("Updated fact: " + ev.previous + " -> " + ev.current);
   }
 
   // fact deleted -> message
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactDeleted ev) {
     txt_msg.setText("Deleted fact: " + ev.fact);
   }
 
   // facts filter submitted -> dispatch DoRelatedFactsRead
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactsFilterAction ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactsFilterAction ev) {
     var matches = _entities.getEntitiesWithIdentifier(ev.filter);
     log.info("matches: {}", matches);
 
@@ -110,14 +104,15 @@ public class AppController implements Initializable {
   }
 
   // relationships filter submitted -> dispatch DoRelationshipsRead
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsFilterAction ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(RelationshipsFilterAction ev) {
 
     EventBus.getDefault().post(new DoRelationshipsFilter(ev.filter));
   }
 
   // entities filter submitted -> dispatch DoEntitiesRead
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesFilterAction ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(EntitiesFilterAction ev) {
     EventBus.getDefault().post(new DoEntitiesFilter(ev.filter));
   }
-
 }

@@ -1,34 +1,25 @@
 name: Java CI with Gradle
 
-on:
-  push:
-    branches: [ master ]
+on: [pull_request, push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 14.0.1
-      uses: actions/setup-java@v1
-      with:
-        java-version: "14"
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build -x test
-    - name: Run tests
-      run: gradle test --tests '*'
-
-  formatting:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - name: Set up JDK 14.0.1
+        uses: actions/setup-java@v1
         with:
           java-version: "14"
-      - uses: axel-op/googlejavaformat-action@v3.0.0
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: code formatter
+        run: ./gradlew spotlessApply
+      - name: Run tests
+        run: ./gradlew clean test
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.3.0
         with:
-          args: "--skip-sorting-imports --replace"
+          commit_message: CI -- Apply formatting changes
+          branch: ${{ github.head_ref }}

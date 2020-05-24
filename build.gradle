@@ -7,6 +7,9 @@ plugins {
 
     // jacoco -- code coverage
     id 'jacoco'
+
+    // spotless -- code formatter
+    id "com.diffplug.gradle.spotless" version "4.0.1"
 }
 
 javafx {
@@ -16,6 +19,7 @@ javafx {
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -79,6 +83,19 @@ jacocoTestReport {
         xml.enabled false
         csv.enabled false
         html.destination file("${buildDir}/jacoco")
+    }
+}
+
+spotless {
+    format 'misc',{
+        target '**/*.gradle', '**/*.md', '**/.gitignore'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+
+    java {
+        target '**/*.java'
+        googleJavaFormat()
     }
 }
 

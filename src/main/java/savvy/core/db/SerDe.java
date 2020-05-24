@@ -1,14 +1,13 @@
 package savvy.core.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SerDe<T> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -26,8 +25,8 @@ public class SerDe<T> {
     return baos.toByteArray();
   }
 
-
-  @SuppressWarnings("unchecked") public Set<T> deserialize(byte[] bytes) {
+  @SuppressWarnings("unchecked")
+  public Set<T> deserialize(byte[] bytes) {
     var bais = new ByteArrayInputStream(bytes);
 
     try {
@@ -44,8 +43,8 @@ public class SerDe<T> {
     return Set.of();
   }
 
-  @SuppressWarnings("unchecked") public Set<T> deserialize(Object bytes) {
+  @SuppressWarnings("unchecked")
+  public Set<T> deserialize(Object bytes) {
     return deserialize((byte[]) bytes);
   }
-
 }

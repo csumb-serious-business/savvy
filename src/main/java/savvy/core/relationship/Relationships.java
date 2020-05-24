@@ -1,5 +1,11 @@
 package savvy.core.relationship;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -16,16 +22,7 @@ import savvy.core.relationship.events.RelationshipUpdated;
 import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * models a group of relationships
- */
+/** models a group of relationships */
 public class Relationships {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -37,10 +34,9 @@ public class Relationships {
     _items = new HashSet<>();
   }
 
-  public static List<Relationship> getRelationshipsWithForm(Collection<Relationship> relationships,
-    String correlate) {
+  public static List<Relationship> getRelationshipsWithForm(
+      Collection<Relationship> relationships, String correlate) {
     return relationships.stream().filter(r -> r.hasForm(correlate)).collect(Collectors.toList());
-
   }
 
   public List<Relationship> getRelationshipsWithForm(String correlate) {
@@ -62,9 +58,8 @@ public class Relationships {
   }
 
   /**
-   * clears and reloads the data in this Entities
-   * on some updates, it is impossible to predict the change
-   * in the db, instead of guessing, we reload everything
+   * clears and reloads the data in this Entities on some updates, it is impossible to predict the
+   * change in the db, instead of guessing, we reload everything
    */
   public void refresh() {
     _items.clear();
@@ -75,11 +70,10 @@ public class Relationships {
   }
 
   /**
-   * updates a particular relationship in the db
-   * broadcasts the change on the event bus
+   * updates a particular relationship in the db broadcasts the change on the event bus
    *
    * @param previous previous version of the Relationship
-   * @param current  current version of the Relationship
+   * @param current current version of the Relationship
    */
   private void relationshipUpdate(Relationship previous, Relationship current) {
     if (previous.equals(current)) {
@@ -92,8 +86,7 @@ public class Relationships {
   }
 
   /**
-   * broadcasts a filtered copy of contained Relationship items
-   * on the event bus
+   * broadcasts a filtered copy of contained Relationship items on the event bus
    *
    * @param filter the string filter to match against
    */
@@ -104,51 +97,51 @@ public class Relationships {
       relationships = _items.stream().sorted().collect(Collectors.toList());
     } else {
       relationships =
-        _items.stream().filter(i -> i.hasForm(filter)).sorted().collect(Collectors.toList());
+          _items.stream().filter(i -> i.hasForm(filter)).sorted().collect(Collectors.toList());
     }
 
     EventBus.getDefault().post(new RelationshipsFiltered(relationships));
-
   }
 
-
-
-  //=== event listeners =========================================================================\\
-  //--- DOs -------------------------------------------------------------------------------------\\
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipsRead ev) {
+  // === event listeners =========================================================================\\
+  // --- DOs -------------------------------------------------------------------------------------\\
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoRelationshipsRead ev) {
     refresh();
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipsFilter ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoRelationshipsFilter ev) {
     relationshipsFilter(ev.filter);
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(DoRelationshipUpdate ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoRelationshipUpdate ev) {
     relationshipUpdate(ev.previous, ev.current);
   }
 
-
-  //--- ONs -------------------------------------------------------------------------------------\\
+  // --- ONs -------------------------------------------------------------------------------------\\
   // fact created -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactCreated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactCreated ev) {
     refresh();
   }
 
   // fact updated -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactUpdated ev) {
     refresh();
   }
 
   // fact deleted -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(FactDeleted ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactDeleted ev) {
     refresh();
   }
 
   // relationship updated -> refresh
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipUpdated ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(RelationshipUpdated ev) {
     refresh();
   }
-
-
-
 }
