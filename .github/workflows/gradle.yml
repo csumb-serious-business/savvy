@@ -18,4 +18,8 @@ jobs:
         run: ./gradlew spotlessApply
       - name: Run tests
         run: ./gradlew clean test
-
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.3.0
+        with:
+          commit_message: Apply formatting changes
+          branch: ${{ github.head_ref }}
