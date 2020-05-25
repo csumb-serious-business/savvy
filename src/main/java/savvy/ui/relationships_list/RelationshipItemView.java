@@ -1,7 +1,5 @@
 package savvy.ui.relationships_list;
 
-import java.util.Set;
-import java.util.stream.Collectors;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -15,6 +13,9 @@ import org.slf4j.LoggerFactory;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipUpdate;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** controller and layout for an individual Fact Item in the FactsFilterList */
 public class RelationshipItemView extends HBox {
@@ -39,9 +40,7 @@ public class RelationshipItemView extends HBox {
     var lbl_name = new Label();
     lbl_name.setText(_relationship.getName());
 
-    var correlates =
-        _relationship.getCorrelates().stream()
-            .map(c -> c.outgoing + " -> " + c.incoming)
+    var correlates = _relationship.getCorrelates().stream().map(c -> c.outbound + " ⇔ " + c.inbound)
             .sorted()
             .collect(Collectors.toList());
     var lbl_correlates = new Label();
@@ -91,10 +90,8 @@ public class RelationshipItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(
         ev -> {
-          var correlates =
-              hb_correlates.getChildren().stream()
-                  .map(c -> fromUI((HBox) c))
-                  .filter(c -> c.incoming.length() > 0 && c.outgoing.length() > 0)
+          var correlates = hb_correlates.getChildren().stream().map(c -> fromUI((HBox) c))
+            .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
                   .collect(Collectors.toSet());
 
           // go straight to view-mode if no change
@@ -120,10 +117,10 @@ public class RelationshipItemView extends HBox {
 
   private HBox toUI(Correlate correlate) {
     var txt_out = new TextField();
-    txt_out.setText(correlate.outgoing);
+    txt_out.setText(correlate.outbound);
 
     var txt_in = new TextField();
-    txt_in.setText(correlate.incoming);
+    txt_in.setText(correlate.inbound);
 
     var label = new Label(" -> ");
 

@@ -1,10 +1,11 @@
 package savvy.core.relationship;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Relationship implements Comparable<Relationship> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -19,6 +20,10 @@ public class Relationship implements Comparable<Relationship> {
   public boolean hasCorrelate(String correlate) {
 
     return correlates.stream().anyMatch(c -> c.hasMember(correlate));
+  }
+
+  public boolean hasOutboundCorrelate(String correlate) {
+    return correlates.stream().anyMatch(c -> c.isOutbound(correlate));
   }
 
   public boolean hasForm(String form) {
@@ -36,7 +41,7 @@ public class Relationship implements Comparable<Relationship> {
    */
   public Set<String> allForms() {
     var forms = new HashSet<String>();
-    correlates.forEach(c -> forms.addAll(Set.of(c.outgoing, c.incoming)));
+    correlates.forEach(c -> forms.addAll(Set.of(c.outbound, c.inbound)));
     forms.add(name);
     return forms;
   }

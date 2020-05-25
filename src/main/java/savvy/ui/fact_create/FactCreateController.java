@@ -1,11 +1,5 @@
 package savvy.ui.fact_create;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
@@ -21,11 +15,21 @@ import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactCreate;
+import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.Relationships;
 import savvy.core.relationship.events.RelationshipsRead;
 
-/** Controller for the Fact Creation view */
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Controller for the Fact Creation view
+ */
 public class FactCreateController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -40,25 +44,17 @@ public class FactCreateController implements Initializable {
   private List<Entity> _entities = null;
   private List<Relationship> _relationships = null;
 
-  /** saves a fact */
+  /**
+   * saves a fact
+   */
   public void save_action() {
     Entity s;
-
     // subject exists -> use existent
     var eFound = Entities.getEntitiesWithIdentifier(_entities, _subject.getText());
     if (eFound.isEmpty()) {
       s = new Entity(_subject.getText(), Set.of());
     } else {
       s = eFound.get(0);
-    }
-
-    Relationship r;
-    // relationship exists -> use existent
-    var rFound = Relationships.getRelationshipsWithForm(_relationships, _relationship.getText());
-    if (rFound.isEmpty()) {
-      r = new Relationship(_relationship.getText(), Set.of());
-    } else {
-      r = rFound.get(0);
     }
 
     Entity o;
@@ -70,14 +66,31 @@ public class FactCreateController implements Initializable {
       o = eFound.get(0);
     }
 
-    var fact = new Fact(s, r, o);
+    Relationship r;
+    boolean rIsOutbound = true;
+    // relationship exists -> use existent
+    var rFound = Relationships.getRelationshipsWithForm(_relationships, _relationship.getText());
+    if (rFound.isEmpty()) {
+      var rText = _relationship.getText();
+      r = new Relationship(rText, Set.of(new Correlate(rText, ("[←" + rText + "]"))));
+    } else {
+      r = rFound.get(0);
+      rIsOutbound = r.hasOutboundCorrelate(_relationship.getText());
+    }
+
+    Fact fact;
+    if (rIsOutbound) {
+      fact = new Fact(s, r, o);
+    } else {
+      fact = new Fact(o, r, s);
+    }
+
     log.info("save fact: {}", fact);
 
     EventBus.getDefault().post(new DoFactCreate(fact));
   }
 
-  @Override
-  public void initialize(URL location, ResourceBundle resources) {
+  @Override public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
   }
 
@@ -112,12 +125,8 @@ public class FactCreateController implements Initializable {
       _rb.dispose();
     }
 
-    var rels =
-        relationships.stream()
-            .map(Relationship::allForms)
-            .flatMap(Set::stream)
-            .sorted()
-            .collect(Collectors.toList());
+    var rels = relationships.stream().map(Relationship::allForms).flatMap(Set::stream).sorted()
+      .collect(Collectors.toList());
 
     _rb = TextFields.bindAutoCompletion(_relationship, rels);
   }
@@ -125,15 +134,13 @@ public class FactCreateController implements Initializable {
   // === event listeners =========================================================================\\
 
   // entities read -> update entities autocomplete
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(EntitiesRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
     _entities = ev.entities;
     updateEntitiesAutocomplete(ev.entities);
   }
 
   // relationships read -> update relationships autocomplete
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(RelationshipsRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
     _relationships = ev.relationships;
     updateRelationshipsAutocomplete(ev.relationships);
   }
