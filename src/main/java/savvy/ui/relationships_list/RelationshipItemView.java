@@ -40,9 +40,9 @@ public class RelationshipItemView extends HBox {
     var lbl_name = new Label();
     lbl_name.setText(_relationship.getName());
 
-    var correlates = _relationship.getCorrelates().stream().map(c -> c.outbound + " ⇔ " + c.inbound)
-            .sorted()
-            .collect(Collectors.toList());
+    var correlates =
+      _relationship.getCorrelates().stream().map(c -> c.outbound + " ⇔ " + c.inbound).sorted()
+        .collect(Collectors.toList());
     var lbl_correlates = new Label();
     lbl_correlates.setText(String.join(", ", correlates));
 
@@ -92,7 +92,7 @@ public class RelationshipItemView extends HBox {
         ev -> {
           var correlates = hb_correlates.getChildren().stream().map(c -> fromUI((HBox) c))
             .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
-                  .collect(Collectors.toSet());
+            .collect(Collectors.toSet());
 
           // go straight to view-mode if no change
           var relationship = new Relationship(name.getText(), correlates);

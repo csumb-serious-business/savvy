@@ -43,8 +43,7 @@ public class Correlate implements Serializable {
       .equals(inbound, correlate.inbound);
   }
 
-  @Override
-  public int hashCode() {
+  @Override public int hashCode() {
     return Objects.hash(outbound, inbound);
   }
 }

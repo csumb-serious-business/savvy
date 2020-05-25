@@ -1,13 +1,5 @@
 package savvy.core.db;
 
-import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
 import org.neo4j.graphdb.Direction;
@@ -25,6 +17,15 @@ import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
+import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
 /** Embeds a Neo4j instance and exposes some basic functionality */
 public class EmbeddedNeo4j {
@@ -360,7 +361,7 @@ public class EmbeddedNeo4j {
   public Set<Relationship> readAllRelationships() {
     var relationships = new HashSet<Relationship>();
     readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
-    log.info("relationships: {}", relationships);
+    //    log.info("relationships: {}", relationships);
 
     return relationships;
   }

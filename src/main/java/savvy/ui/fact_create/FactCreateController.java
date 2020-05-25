@@ -10,19 +10,14 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.entity.Entities;
 import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesRead;
-import savvy.core.fact.Fact;
 import savvy.core.fact.events.DoFactCreate;
-import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
-import savvy.core.relationship.Relationships;
 import savvy.core.relationship.events.RelationshipsRead;
 
 import java.net.URL;
 import java.util.Collection;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,53 +36,12 @@ public class FactCreateController implements Initializable {
   private AutoCompletionBinding<String> _rb = null;
   private AutoCompletionBinding<String> _ob = null;
 
-  private List<Entity> _entities = null;
-  private List<Relationship> _relationships = null;
-
   /**
    * saves a fact
    */
   public void save_action() {
-    Entity s;
-    // subject exists -> use existent
-    var eFound = Entities.getEntitiesWithIdentifier(_entities, _subject.getText());
-    if (eFound.isEmpty()) {
-      s = new Entity(_subject.getText(), Set.of());
-    } else {
-      s = eFound.get(0);
-    }
-
-    Entity o;
-    // object exists -> use existent
-    eFound = Entities.getEntitiesWithIdentifier(_entities, _object.getText());
-    if (eFound.isEmpty()) {
-      o = new Entity(_object.getText(), Set.of());
-    } else {
-      o = eFound.get(0);
-    }
-
-    Relationship r;
-    boolean rIsOutbound = true;
-    // relationship exists -> use existent
-    var rFound = Relationships.getRelationshipsWithForm(_relationships, _relationship.getText());
-    if (rFound.isEmpty()) {
-      var rText = _relationship.getText();
-      r = new Relationship(rText, Set.of(new Correlate(rText, ("[←" + rText + "]"))));
-    } else {
-      r = rFound.get(0);
-      rIsOutbound = r.hasOutboundCorrelate(_relationship.getText());
-    }
-
-    Fact fact;
-    if (rIsOutbound) {
-      fact = new Fact(s, r, o);
-    } else {
-      fact = new Fact(o, r, s);
-    }
-
-    log.info("save fact: {}", fact);
-
-    EventBus.getDefault().post(new DoFactCreate(fact));
+    EventBus.getDefault()
+      .post(new DoFactCreate(_subject.getText(), _relationship.getText(), _object.getText()));
   }
 
   @Override public void initialize(URL location, ResourceBundle resources) {
@@ -135,13 +89,11 @@ public class FactCreateController implements Initializable {
 
   // entities read -> update entities autocomplete
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
-    _entities = ev.entities;
     updateEntitiesAutocomplete(ev.entities);
   }
 
   // relationships read -> update relationships autocomplete
   @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
-    _relationships = ev.relationships;
     updateRelationshipsAutocomplete(ev.relationships);
   }
 }
