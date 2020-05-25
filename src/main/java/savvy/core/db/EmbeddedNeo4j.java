@@ -1,5 +1,13 @@
 package savvy.core.db;
 
+import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
 import org.neo4j.graphdb.Direction;
@@ -17,15 +25,6 @@ import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
-import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
 /** Embeds a Neo4j instance and exposes some basic functionality */
 public class EmbeddedNeo4j {
@@ -113,7 +112,7 @@ public class EmbeddedNeo4j {
   /**
    * checks whether the index is populated
    *
-   * @return true is index population is complete
+   * @return true if index population is complete
    */
   public boolean isIndexed() {
     try (var tx = _db.beginTx()) {
@@ -134,9 +133,9 @@ public class EmbeddedNeo4j {
   /**
    * add a fact to the database
    *
-   * @param subject the subject of the fact
-   * @param relationship the relationship between the subject and object
-   * @param object the object of the fact
+   * @param subject of the fact
+   * @param relationship between the subject and object
+   * @param object of the fact
    */
   public void createFact(Entity subject, Relationship relationship, Entity object) {
     createEntity(subject);
@@ -157,7 +156,7 @@ public class EmbeddedNeo4j {
   /**
    * add a fact to the database
    *
-   * @param fact the fact to add
+   * @param fact to add
    */
   public void createFact(Fact fact) {
     createFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
@@ -199,7 +198,7 @@ public class EmbeddedNeo4j {
   /**
    * Delete a fact from the database
    *
-   * @param fact the fact to delete
+   * @param fact to delete
    */
   public void deleteFact(Fact fact) {
     deleteFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
@@ -209,7 +208,7 @@ public class EmbeddedNeo4j {
    * Traverse the graph collecting all relationships and entities that are connected to a given
    * entity and return a fact for each
    *
-   * @param entityName the name of the entity to lookup
+   * @param entityName to lookup
    * @return a set of Facts corresponding to the relationships found in the traversal
    */
   public Set<Fact> readRelatedFacts(String entityName) {
@@ -265,7 +264,7 @@ public class EmbeddedNeo4j {
   /**
    * For a given path, gather its subject, relationship and object and create a fact from it
    *
-   * @param path the path containing the relationship
+   * @param path containing the relationship
    * @return a corresponding Fact
    */
   private Fact pathAsFact(Path path) {
@@ -289,7 +288,7 @@ public class EmbeddedNeo4j {
    * adds an entity to the database if it did not exist yet note: it seems the fist call to this
    * takes some time to execute
    *
-   * @param entity the entity to create
+   * @param entity to create
    */
   public void createEntity(Entity entity) {
     try (var tx = _db.beginTx()) {
@@ -305,8 +304,8 @@ public class EmbeddedNeo4j {
   /**
    * update an Entity in the database
    *
-   * @param previous the previous version of the Entity
-   * @param current the current version of the Entity
+   * @param previous entity version
+   * @param current entity version
    */
   public void updateEntity(Entity previous, Entity current) {
 
@@ -344,7 +343,7 @@ public class EmbeddedNeo4j {
                 var name = n.getProperty(NAME).toString();
                 var aliases = new SerDe<String>().deserialize((byte[]) n.getProperty(ALIASES));
                 entities.add(new Entity(name, aliases));
-                log.info("reading -- name: {}, aliases: {}", name, aliases);
+                // log.info("reading -- name: {}, aliases: {}", name, aliases);
               });
     }
 
@@ -369,8 +368,8 @@ public class EmbeddedNeo4j {
   /**
    * update a relationship in the database
    *
-   * @param previous the previous version of the relationship
-   * @param current the current version of the relationship
+   * @param previous relationship version
+   * @param current relationship version
    */
   public void updateRelationship(Relationship previous, Relationship current) {
 

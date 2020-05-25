@@ -1,5 +1,10 @@
 package savvy.ui.fact_create;
 
+import java.net.URL;
+import java.util.Collection;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
@@ -16,15 +21,7 @@ import savvy.core.fact.events.DoFactCreate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.RelationshipsRead;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * Controller for the Fact Creation view
- */
+/** Controller for the Fact Creation view */
 public class FactCreateController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -35,18 +32,6 @@ public class FactCreateController implements Initializable {
   private AutoCompletionBinding<String> _sb = null;
   private AutoCompletionBinding<String> _rb = null;
   private AutoCompletionBinding<String> _ob = null;
-
-  /**
-   * saves a fact
-   */
-  public void save_action() {
-    EventBus.getDefault()
-      .post(new DoFactCreate(_subject.getText(), _relationship.getText(), _object.getText()));
-  }
-
-  @Override public void initialize(URL location, ResourceBundle resources) {
-    EventBus.getDefault().register(this);
-  }
 
   /**
    * updates the autocomplete filter
@@ -79,21 +64,42 @@ public class FactCreateController implements Initializable {
       _rb.dispose();
     }
 
-    var rels = relationships.stream().map(Relationship::allForms).flatMap(Set::stream).sorted()
-      .collect(Collectors.toList());
+    // todo -- this is messy, receive something clean and use it directly [MBR]
+    var rels =
+        relationships.stream()
+            .map(Relationship::allForms)
+            .flatMap(Set::stream)
+            .sorted()
+            .collect(Collectors.toList());
 
     _rb = TextFields.bindAutoCompletion(_relationship, rels);
   }
 
-  // === event listeners =========================================================================\\
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
+  @Override
+  public void initialize(URL location, ResourceBundle resources) {
+    EventBus.getDefault().register(this);
+  }
 
+  /** saves a fact */
+  public void save_action() {
+    EventBus.getDefault()
+        .post(new DoFactCreate(_subject.getText(), _relationship.getText(), _object.getText()));
+  }
+  // --- DO listeners ----------------------------------------------------------------------------\\
+  // NONE
+
+  //  --- ON listeners ---------------------------------------------------------------------------\\
   // entities read -> update entities autocomplete
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(EntitiesRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(EntitiesRead ev) {
     updateEntitiesAutocomplete(ev.entities);
   }
 
   // relationships read -> update relationships autocomplete
-  @Subscribe(threadMode = ThreadMode.MAIN) public void on(RelationshipsRead ev) {
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(RelationshipsRead ev) {
     updateRelationshipsAutocomplete(ev.relationships);
   }
 }

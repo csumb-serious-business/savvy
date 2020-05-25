@@ -18,6 +18,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
+import savvy.core.entity.events.DoEntitiesFilter;
 import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
 
@@ -28,13 +29,6 @@ public class EntitiesListController implements Initializable {
   @FXML private TextField _filter;
 
   private AutoCompletionBinding<String> _fb = null;
-
-  public void filter_action() {
-    var filter = _filter.getText();
-    log.info("filter entities list: {}", filter);
-
-    EventBus.getDefault().post(new EntitiesFilterAction(filter));
-  }
 
   /**
    * updates the autocomplete filter
@@ -71,12 +65,25 @@ public class EntitiesListController implements Initializable {
     lv_entities.getItems().addAll(layouts);
   }
 
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
   @Override
   public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
   }
 
-  // === event listeners =========================================================================\\
+  /** filters the list view */
+  public void filter_action() {
+    var filter = _filter.getText();
+    log.info("filter entities list: {}", filter);
+
+    EventBus.getDefault().post(new DoEntitiesFilter(filter));
+  }
+
+  // --- DO listeners ----------------------------------------------------------------------------\\
+  // NONE
+
+  //  --- ON listeners ---------------------------------------------------------------------------\\
   // entities read -> update autocomplete & list view
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(EntitiesRead ev) {

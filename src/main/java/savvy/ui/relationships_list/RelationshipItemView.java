@@ -1,5 +1,7 @@
 package savvy.ui.relationships_list;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -13,9 +15,6 @@ import org.slf4j.LoggerFactory;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipUpdate;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /** controller and layout for an individual Fact Item in the FactsFilterList */
 public class RelationshipItemView extends HBox {
@@ -41,8 +40,10 @@ public class RelationshipItemView extends HBox {
     lbl_name.setText(_relationship.getName());
 
     var correlates =
-      _relationship.getCorrelates().stream().map(c -> c.outbound + " ⇔ " + c.inbound).sorted()
-        .collect(Collectors.toList());
+        _relationship.getCorrelates().stream()
+            .map(c -> c.outbound + " ⇔ " + c.inbound)
+            .sorted()
+            .collect(Collectors.toList());
     var lbl_correlates = new Label();
     lbl_correlates.setText(String.join(", ", correlates));
 
@@ -90,9 +91,11 @@ public class RelationshipItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(
         ev -> {
-          var correlates = hb_correlates.getChildren().stream().map(c -> fromUI((HBox) c))
-            .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
-            .collect(Collectors.toSet());
+          var correlates =
+              hb_correlates.getChildren().stream()
+                  .map(c -> fromUI((HBox) c))
+                  .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
+                  .collect(Collectors.toSet());
 
           // go straight to view-mode if no change
           var relationship = new Relationship(name.getText(), correlates);
@@ -115,6 +118,12 @@ public class RelationshipItemView extends HBox {
     this.getChildren().addAll(name, hb_correlates, gap, btn_cancel, btn_save);
   }
 
+  /**
+   * given a correlate, generates a UI representation in a HBox
+   *
+   * @param correlate to render
+   * @return an HBox
+   */
   private HBox toUI(Correlate correlate) {
     var txt_out = new TextField();
     txt_out.setText(correlate.outbound);
@@ -129,6 +138,12 @@ public class RelationshipItemView extends HBox {
     return box;
   }
 
+  /**
+   * given an HBox representation of a correlate, extracts the correlate's values
+   *
+   * @param box to extract from
+   * @return a correlate based on the HBox's data
+   */
   private Correlate fromUI(HBox box) {
     var fields =
         box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());

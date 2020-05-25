@@ -21,9 +21,10 @@ import savvy.core.entity.Entity;
 import savvy.core.entity.events.EntitiesRead;
 import savvy.core.entity.events.EntityUpdated;
 import savvy.core.fact.Fact;
-import savvy.core.fact.events.DoFactsRead;
+import savvy.core.fact.events.DoFactsSearch;
 import savvy.core.fact.events.FactCreated;
-import savvy.core.fact.events.FactsRead;
+import savvy.core.fact.events.FactUpdated;
+import savvy.core.fact.events.FactsSearched;
 import savvy.core.relationship.events.RelationshipUpdated;
 
 /** Controller for the Fact Item list and filter */
@@ -35,23 +36,10 @@ public class FactsListController implements Initializable {
   private AutoCompletionBinding<String> _fb = null;
   private String lastFilter = "";
 
-  /** filters the facts list view */
-  public void filter_action() {
-    var filter = _filter.getText();
-    lastFilter = filter;
-    log.info("filter facts list: {}", filter);
-    EventBus.getDefault().post(new FactsFilterAction(filter));
-  }
-
-  @Override
-  public void initialize(URL location, ResourceBundle resources) {
-    EventBus.getDefault().register(this);
-  }
-
   /**
    * updates the autocomplete filter
    *
-   * @param entities the entities to use for the suggestions
+   * @param entities to use for the suggestions
    */
   private void updateEntitiesAutocomplete(Collection<Entity> entities) {
     // clear old bindings
@@ -59,6 +47,7 @@ public class FactsListController implements Initializable {
       _fb.dispose();
     }
 
+    // todo -- this is messy, receive something clean and use it directly [MBR]
     var identifiers =
         entities.stream()
             .map(Entity::getIdentifiers)
@@ -67,6 +56,10 @@ public class FactsListController implements Initializable {
             .collect(Collectors.toList());
 
     _fb = TextFields.bindAutoCompletion(_filter, identifiers);
+  }
+
+  private void refreshFact(Fact previous, Fact current) {
+    lv_facts.getItems().forEach(it -> it.claimUpdate(previous, current));
   }
 
   /**
@@ -82,12 +75,29 @@ public class FactsListController implements Initializable {
     lv_facts.getItems().addAll(layouts);
   }
 
-  // === event listeners =========================================================================\\
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
+  @Override
+  public void initialize(URL location, ResourceBundle resources) {
+    EventBus.getDefault().register(this);
+  }
 
+  /** filters the facts list view */
+  public void filter_action() {
+    var filter = _filter.getText();
+    lastFilter = filter;
+    log.info("filter facts list: {}", filter);
+    EventBus.getDefault().post(new DoFactsSearch(filter));
+  }
+
+  // --- DO listeners ----------------------------------------------------------------------------\\
+  // NONE
+
+  // --- ON listeners ---------------------------------------------------------------------------\\
   // related facts read -> populate facts list
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(FactsRead ev) {
-    refresh(ev.facts.getItems());
+  public void on(FactsSearched ev) {
+    refresh(ev.facts);
   }
 
   // entities names updated -> autocomplete list
@@ -102,13 +112,19 @@ public class FactsListController implements Initializable {
     lv_facts.getItems().add(new FactItemView(ev.fact, lv_facts));
   }
 
+  // fact updated -> item's internal values
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(FactUpdated ev) {
+    refreshFact(ev.previous, ev.current);
+  }
+
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(EntityUpdated ev) {
-    EventBus.getDefault().post(new DoFactsRead(""));
+    EventBus.getDefault().post(new DoFactsSearch(""));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipUpdated ev) {
-    EventBus.getDefault().post(new DoFactsRead(""));
+    EventBus.getDefault().post(new DoFactsSearch(""));
   }
 }

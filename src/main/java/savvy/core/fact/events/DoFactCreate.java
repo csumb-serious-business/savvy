@@ -3,9 +3,7 @@ package savvy.core.fact.events;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * fired to initiate Fact creation in the DB
- */
+/** fired to initiate Fact creation in the DB */
 public final class DoFactCreate {
   public final String subject;
   public final String relationship;
