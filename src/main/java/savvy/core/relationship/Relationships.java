@@ -1,6 +1,5 @@
 package savvy.core.relationship;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -44,9 +43,51 @@ public class Relationships {
   }
 
   /**
+   * clears and reloads the data in this Entities on some updates, it is impossible to predict the
+   * change in the db, instead of guessing, we reload everything
+   */
+  public List<Relationship> refresh() {
+    _items.clear();
+    _items.addAll(_db.readAllRelationships());
+
+    return _items.stream().sorted().collect(Collectors.toList());
+  }
+
+  /**
+   * updates a particular relationship in the db
+   *
+   * @param previous relationship version
+   * @param current relationship version
+   */
+  private boolean relationshipUpdate(Relationship previous, Relationship current) {
+    if (previous.equals(current)) {
+      return false;
+    }
+
+    _db.updateRelationship(previous, current);
+
+    return true;
+  }
+
+  /**
+   * gets a filtered copy of contained relationship items
+   *
+   * @param filter to match against
+   */
+  private List<Relationship> relationshipsFilter(String filter) {
+    if (filter.isBlank()) {
+      return _items.stream().sorted().collect(Collectors.toList());
+    } else {
+      return _items.stream().filter(i -> i.hasForm(filter)).sorted().collect(Collectors.toList());
+    }
+  }
+
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
+  /**
    * initializes this with a given db
    *
-   * @param db the db to use
+   * @param db to use
    */
   public void init(EmbeddedNeo4j db) {
     _db = db;
@@ -54,94 +95,58 @@ public class Relationships {
     // register with event bus
     EventBus.getDefault().register(this);
 
-    refresh();
+    var read = refresh();
+
+    EventBus.getDefault().post(new RelationshipsRead(read));
   }
 
-  /**
-   * clears and reloads the data in this Entities on some updates, it is impossible to predict the
-   * change in the db, instead of guessing, we reload everything
-   */
-  public void refresh() {
-    _items.clear();
-    _items.addAll(_db.readAllRelationships());
-
-    var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
-    EventBus.getDefault().post(new RelationshipsRead(result));
-  }
-
-  /**
-   * updates a particular relationship in the db broadcasts the change on the event bus
-   *
-   * @param previous previous version of the Relationship
-   * @param current current version of the Relationship
-   */
-  private void relationshipUpdate(Relationship previous, Relationship current) {
-    if (previous.equals(current)) {
-      return;
-    }
-
-    _db.updateRelationship(previous, current);
-
-    EventBus.getDefault().post(new RelationshipUpdated(previous, current));
-  }
-
-  /**
-   * broadcasts a filtered copy of contained Relationship items on the event bus
-   *
-   * @param filter the string filter to match against
-   */
-  private void relationshipsFilter(String filter) {
-    List<Relationship> relationships;
-
-    if (filter.equals("")) {
-      relationships = _items.stream().sorted().collect(Collectors.toList());
-    } else {
-      relationships =
-          _items.stream().filter(i -> i.hasForm(filter)).sorted().collect(Collectors.toList());
-    }
-
-    EventBus.getDefault().post(new RelationshipsFiltered(relationships));
-  }
-
-  // === event listeners =========================================================================\\
-  // --- DOs -------------------------------------------------------------------------------------\\
+  // --- DO listeners ----------------------------------------------------------------------------\\
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoRelationshipsRead ev) {
-    refresh();
+    var result = refresh();
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoRelationshipsFilter ev) {
-    relationshipsFilter(ev.filter);
+    var filtered = relationshipsFilter(ev.filter);
+    EventBus.getDefault().post(new RelationshipsFiltered(filtered));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoRelationshipUpdate ev) {
-    relationshipUpdate(ev.previous, ev.current);
+    var success = relationshipUpdate(ev.previous, ev.current);
+    if (success) {
+      EventBus.getDefault().post(new RelationshipUpdated(ev.previous, ev.current));
+    }
   }
 
-  // --- ONs -------------------------------------------------------------------------------------\\
+  // --- ON listeners ---------------------------------------------------------------------------\\
   // fact created -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactCreated ev) {
-    refresh();
+    var result = refresh();
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 
   // fact updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactUpdated ev) {
-    refresh();
+    var result = refresh();
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 
   // fact deleted -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactDeleted ev) {
-    refresh();
+    var result = refresh();
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 
   // relationship updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipUpdated ev) {
-    refresh();
+    var result = refresh();
+    EventBus.getDefault().post(new RelationshipsRead(result));
   }
 }

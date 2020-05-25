@@ -17,6 +17,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.relationship.Relationship;
+import savvy.core.relationship.events.DoRelationshipsFilter;
 import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
 
@@ -27,13 +28,6 @@ public class RelationshipsListController implements Initializable {
   @FXML private TextField _filter;
 
   private AutoCompletionBinding<String> _fb = null;
-
-  public void filter_action() {
-    var filter = _filter.getText();
-    log.info("filter relationships list: {}", filter);
-
-    EventBus.getDefault().post(new RelationshipsFilterAction(filter));
-  }
 
   /**
    * updates the autocomplete filter
@@ -68,13 +62,25 @@ public class RelationshipsListController implements Initializable {
     lv_relationships.getItems().addAll(layouts);
   }
 
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
   @Override
   public void initialize(URL location, ResourceBundle resources) {
     EventBus.getDefault().register(this);
   }
 
-  // === event listeners =========================================================================\\
+  /** filters the relationships view */
+  public void filter_action() {
+    var filter = _filter.getText();
+    log.info("filter relationships list: {}", filter);
 
+    EventBus.getDefault().post(new DoRelationshipsFilter(filter));
+  }
+
+  // --- DO listeners ----------------------------------------------------------------------------\\
+  // NONE
+
+  //  --- ON listeners ---------------------------------------------------------------------------\\
   // relationship names updated -> update autocomplete & list view
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipsRead ev) {

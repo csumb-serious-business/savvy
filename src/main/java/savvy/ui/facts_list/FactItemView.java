@@ -23,6 +23,24 @@ public class FactItemView extends HBox {
 
   private final ListView<FactItemView> _parent;
   private Fact _fact;
+  private boolean inEditMode = false;
+
+  /**
+   * claims a fact update and applies it
+   *
+   * @param previous fact version
+   * @param current fact version
+   */
+  public void claimUpdate(Fact previous, Fact current) {
+    if (_fact.equals(previous)) {
+      _fact = current;
+      if (inEditMode) {
+        editMode();
+      } else {
+        viewMode();
+      }
+    }
+  }
 
   public FactItemView(Fact fact, ListView<FactItemView> parent) {
     super();
@@ -37,6 +55,7 @@ public class FactItemView extends HBox {
 
   /** creates & wires the layout for this item's view mode */
   private void viewMode() {
+    inEditMode = false;
     var label = new Label();
     label.setText(_fact.toString());
 
@@ -61,6 +80,7 @@ public class FactItemView extends HBox {
 
   /** creates & wires the layout for this item's edit mode */
   private void editMode() {
+    inEditMode = true;
 
     final double width = this.widthProperty().doubleValue() / 5.0d;
 
@@ -102,8 +122,7 @@ public class FactItemView extends HBox {
           // update the fact data
           EventBus.getDefault().post(new DoFactUpdate(_fact, fact));
 
-          // update the underlying fact
-          this._fact = fact;
+          // don't update the underlying fact -- it is handled by event bus
 
           // go back to view mode
           this.viewMode();

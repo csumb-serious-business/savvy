@@ -20,3 +20,6 @@ extract `savvy.zip` or `savvy.tar`
 
 ## run tests with code coverage
 `gradlew clean test`
+
+## code formatting
+`gradlew spotlessApply`

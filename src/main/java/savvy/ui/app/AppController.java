@@ -14,15 +14,12 @@ import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.Entities;
 import savvy.core.entity.events.DoEntitiesFilter;
 import savvy.core.fact.Facts;
-import savvy.core.fact.events.DoFactsRead;
+import savvy.core.fact.events.DoFactsSearch;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.relationship.Relationships;
 import savvy.core.relationship.events.DoRelationshipsFilter;
-import savvy.ui.entities_list.EntitiesFilterAction;
-import savvy.ui.facts_list.FactsFilterAction;
-import savvy.ui.relationships_list.RelationshipsFilterAction;
 
 /** Controller for the application's main window */
 public class AppController implements Initializable {
@@ -45,14 +42,19 @@ public class AppController implements Initializable {
   }
 
   /**
-   * sets the embedded neo4j db this application won't run without it
+   * sets the embedded neo4j db; this application won't run without it
    *
-   * @param db the embedded neo4j db
+   * @param db embedded neo4j
    */
   public void setDB(EmbeddedNeo4j db) {
     this._db = db;
   }
 
+  @Override
+  public void initialize(URL location, ResourceBundle resources) {}
+
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
   /** loaded action for the controller overall */
   public void loaded_action() {
     // register with event bus
@@ -63,15 +65,16 @@ public class AppController implements Initializable {
     _relationships.init(_db);
 
     // manually populate the lists
-    EventBus.getDefault().post(new FactsFilterAction(""));
-    EventBus.getDefault().post(new RelationshipsFilterAction(""));
-    EventBus.getDefault().post(new EntitiesFilterAction(""));
+    EventBus.getDefault().post(new DoFactsSearch(""));
+    EventBus.getDefault().post(new DoRelationshipsFilter(""));
+    EventBus.getDefault().post(new DoEntitiesFilter(""));
   }
 
-  @Override
-  public void initialize(URL location, ResourceBundle resources) {}
+  // --- DO listeners ----------------------------------------------------------------------------\\
+  // NONE
 
-  // === event listeners =========================================================================\\
+  // --- ON listeners ---------------------------------------------------------------------------\\
+
   // fact created -> message
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactCreated ev) {
@@ -88,31 +91,5 @@ public class AppController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactDeleted ev) {
     txt_msg.setText("Deleted fact: " + ev.fact);
-  }
-
-  // facts filter submitted -> dispatch DoRelatedFactsRead
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(FactsFilterAction ev) {
-    var matches = _entities.getEntitiesWithIdentifier(ev.filter);
-    log.info("matches: {}", matches);
-
-    if (matches.size() > 0) {
-      EventBus.getDefault().post(new DoFactsRead(matches.get(0).getName()));
-    } else {
-      EventBus.getDefault().post(new DoFactsRead(ev.filter));
-    }
-  }
-
-  // relationships filter submitted -> dispatch DoRelationshipsRead
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(RelationshipsFilterAction ev) {
-
-    EventBus.getDefault().post(new DoRelationshipsFilter(ev.filter));
-  }
-
-  // entities filter submitted -> dispatch DoEntitiesRead
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(EntitiesFilterAction ev) {
-    EventBus.getDefault().post(new DoEntitiesFilter(ev.filter));
   }
 }

@@ -26,47 +26,41 @@ import savvy.core.fact.events.FactUpdated;
 public class Entities {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  private final Set<Entity> _items;
+  private final Set<Entity> _items = new HashSet<>();
 
   private EmbeddedNeo4j _db;
 
-  public Entities() {
-    _items = new HashSet<>();
-  }
-
+  /**
+   * given a collection of entities, finds and returns those that have a matching identifier
+   *
+   * @param entities to filter
+   * @param identifier to search for
+   * @return found entities list
+   */
   public static List<Entity> getEntitiesWithIdentifier(
       Collection<Entity> entities, String identifier) {
     return entities.stream().filter(i -> i.hasIdentifier(identifier)).collect(Collectors.toList());
   }
 
-  public List<Entity> getEntitiesWithIdentifier(String alias) {
-    return Entities.getEntitiesWithIdentifier(_items, alias);
-  }
-
   /**
-   * initializes this with a given db
+   * get a list of entities that match from this Entities items
    *
-   * @param db the db to use
+   * @param identifier to filter
+   * @return found entities list
    */
-  public void init(EmbeddedNeo4j db) {
-    _db = db;
-
-    // register with event bus
-    EventBus.getDefault().register(this);
-
-    refresh();
+  public List<Entity> getEntitiesWithIdentifier(String identifier) {
+    return Entities.getEntitiesWithIdentifier(_items, identifier);
   }
 
   /**
    * goes to the db to get an up-to-date version of all entities broadcasts the read event on the
    * event bus
    */
-  private void refresh() {
+  private List<Entity> refresh() {
     _items.clear();
     _items.addAll(_db.readAllEntities());
 
-    var result = new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
-    EventBus.getDefault().post(new EntitiesRead(result));
+    return new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
   }
 
   /**
@@ -75,14 +69,13 @@ public class Entities {
    * @param previous previous version of the Entity
    * @param current current version of the Entity
    */
-  private void entityUpdate(Entity previous, Entity current) {
+  private boolean entityUpdate(Entity previous, Entity current) {
     if (previous.equals(current)) {
-      return;
+      return false;
     }
 
     _db.updateEntity(previous, current);
-
-    EventBus.getDefault().post(new EntityUpdated(previous, current));
+    return true;
   }
 
   /**
@@ -90,57 +83,81 @@ public class Entities {
    *
    * @param filter the string filter to match against
    */
-  private void entitiesFilter(String filter) {
-    List<Entity> entities;
-    if (filter.equals("")) {
-      entities = _items.stream().sorted().collect(Collectors.toList());
+  private List<Entity> entitiesFilter(String filter) {
+    if (filter.isBlank()) {
+      return _items.stream().sorted().collect(Collectors.toList());
     } else {
-
-      entities =
-          _items.stream().filter(i -> i.hasAlias(filter)).sorted().collect(Collectors.toList());
+      return _items.stream()
+          .filter(i -> i.hasIdentifier(filter))
+          .sorted()
+          .collect(Collectors.toList());
     }
-    EventBus.getDefault().post(new EntitiesFiltered(entities));
   }
 
-  // === event listeners =========================================================================\\
-  // --- DOs -------------------------------------------------------------------------------------\\
+  // === events ==================================================================================\\
+  // --- Emitters --------------------------------------------------------------------------------\\
+  /**
+   * initialize this with a given db
+   *
+   * @param db to use
+   */
+  public void init(EmbeddedNeo4j db) {
+    _db = db;
+
+    // register with event bus
+    EventBus.getDefault().register(this);
+
+    var read = refresh();
+    EventBus.getDefault().post(new EntitiesRead(read));
+  }
+
+  // --- DO listeners ----------------------------------------------------------------------------\\
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoEntitiesRead ev) {
-    refresh();
+    var read = refresh();
+    EventBus.getDefault().post(new EntitiesRead(read));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoEntitiesFilter ev) {
-    entitiesFilter(ev.filter);
+    var entities = entitiesFilter(ev.filter);
+    EventBus.getDefault().post(new EntitiesFiltered(entities));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoEntityUpdate ev) {
-    entityUpdate(ev.previous, ev.current);
+    var success = entityUpdate(ev.previous, ev.current);
+    if (success) {
+      EventBus.getDefault().post(new EntityUpdated(ev.previous, ev.current));
+    }
   }
 
-  // --- ONs -------------------------------------------------------------------------------------\\
+  // --- ON listeners ---------------------------------------------------------------------------\\
   // fact created -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactCreated ev) {
-    refresh();
+    var read = refresh();
+    EventBus.getDefault().post(new EntitiesRead(read));
   }
 
   // fact updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactUpdated ev) {
-    refresh();
+    var read = refresh();
+    EventBus.getDefault().post(new EntitiesRead(read));
   }
 
   // fact deleted -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactDeleted ev) {
-    refresh();
+    var read = refresh();
+    EventBus.getDefault().post(new EntitiesRead(read));
   }
 
   // entity updated -> refresh
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(EntityUpdated ev) {
-    refresh();
+    var read = refresh();
+    EventBus.getDefault().post(new EntitiesRead(read));
   }
 }

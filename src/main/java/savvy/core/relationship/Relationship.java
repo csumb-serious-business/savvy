@@ -16,11 +16,33 @@ public class Relationship implements Comparable<Relationship> {
   // participating in the relationship
   private final Set<Correlate> correlates;
 
+  /**
+   * check if this relationship has a given correlate member
+   *
+   * @param correlate to look for
+   * @return true if the member is present
+   */
   public boolean hasCorrelate(String correlate) {
 
     return correlates.stream().anyMatch(c -> c.hasMember(correlate));
   }
 
+  /**
+   * check if this relationship has a given outbound correlate member
+   *
+   * @param correlate to look for
+   * @return true if the member is present and outbound
+   */
+  public boolean hasOutboundCorrelate(String correlate) {
+    return correlates.stream().anyMatch(c -> c.isOutbound(correlate));
+  }
+
+  /**
+   * check if this relationship has a given form (correlate member)
+   *
+   * @param form to look for
+   * @return true if the form is present
+   */
   public boolean hasForm(String form) {
     return name.equals(form) || hasCorrelate(form);
   }
@@ -36,7 +58,7 @@ public class Relationship implements Comparable<Relationship> {
    */
   public Set<String> allForms() {
     var forms = new HashSet<String>();
-    correlates.forEach(c -> forms.addAll(Set.of(c.outgoing, c.incoming)));
+    correlates.forEach(c -> forms.addAll(Set.of(c.outbound, c.inbound)));
     forms.add(name);
     return forms;
   }

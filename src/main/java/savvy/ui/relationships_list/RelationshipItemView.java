@@ -41,7 +41,7 @@ public class RelationshipItemView extends HBox {
 
     var correlates =
         _relationship.getCorrelates().stream()
-            .map(c -> c.outgoing + " -> " + c.incoming)
+            .map(c -> c.outbound + " ⇔ " + c.inbound)
             .sorted()
             .collect(Collectors.toList());
     var lbl_correlates = new Label();
@@ -94,7 +94,7 @@ public class RelationshipItemView extends HBox {
           var correlates =
               hb_correlates.getChildren().stream()
                   .map(c -> fromUI((HBox) c))
-                  .filter(c -> c.incoming.length() > 0 && c.outgoing.length() > 0)
+                  .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
                   .collect(Collectors.toSet());
 
           // go straight to view-mode if no change
@@ -118,12 +118,18 @@ public class RelationshipItemView extends HBox {
     this.getChildren().addAll(name, hb_correlates, gap, btn_cancel, btn_save);
   }
 
+  /**
+   * given a correlate, generates a UI representation in a HBox
+   *
+   * @param correlate to render
+   * @return an HBox
+   */
   private HBox toUI(Correlate correlate) {
     var txt_out = new TextField();
-    txt_out.setText(correlate.outgoing);
+    txt_out.setText(correlate.outbound);
 
     var txt_in = new TextField();
-    txt_in.setText(correlate.incoming);
+    txt_in.setText(correlate.inbound);
 
     var label = new Label(" -> ");
 
@@ -132,6 +138,12 @@ public class RelationshipItemView extends HBox {
     return box;
   }
 
+  /**
+   * given an HBox representation of a correlate, extracts the correlate's values
+   *
+   * @param box to extract from
+   * @return a correlate based on the HBox's data
+   */
   private Correlate fromUI(HBox box) {
     var fields =
         box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
