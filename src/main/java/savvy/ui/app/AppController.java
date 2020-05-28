@@ -4,6 +4,8 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.text.Text;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -32,7 +34,11 @@ public class AppController implements Initializable {
 
   private EmbeddedNeo4j _db;
 
+  @FXML private TabPane tabs;
   @FXML private Text txt_app_msg;
+  @FXML private Tab tab_facts;
+  @FXML private Tab tab_entities;
+  @FXML private Tab tab_relationships;
 
   public AppController() {
     instance = this;
@@ -71,7 +77,21 @@ public class AppController implements Initializable {
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\
-  // NONE
+  // do show tab -> switch tab
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoShowTab ev) {
+    switch (ev.code) {
+      case F:
+        tabs.getSelectionModel().select(tab_facts);
+        break;
+      case E:
+        tabs.getSelectionModel().select(tab_entities);
+        break;
+      case R:
+        tabs.getSelectionModel().select(tab_relationships);
+        break;
+    }
+  }
 
   // --- ON listeners ---------------------------------------------------------------------------\\
 
