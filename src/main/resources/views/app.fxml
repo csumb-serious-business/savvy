@@ -1,67 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<?import java.net.URL?>
 <GridPane xmlns:fx="http://javafx.com/fxml"
           xmlns="http://javafx.com/javafx"
           fx:controller="savvy.ui.app.AppController"
           alignment="center"
           hgap="10"
           vgap="10"
+          minWidth="800"
+          minHeight="-Infinity"
           gridLinesVisible="false"
 
 >
     <!-- ^ gridLinesVisible="true" to see layout grid lines -->
-    <padding>
-        <Insets top="25" right="25" bottom="25" left="25"/>
-    </padding>
 
-    <fx:include source="fact_create.fxml"
-                GridPane.columnIndex="0"
-                GridPane.rowIndex="0"
-    />
+    <stylesheets>
+        <URL value="@/styles/styles.css"/>
+    </stylesheets>
 
-    <Separator
-            GridPane.rowIndex="1"
+    <columnConstraints>
+        <ColumnConstraints hgrow="ALWAYS"/>
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints vgrow="ALWAYS"/>
+    </rowConstraints>
+
+    <TabPane
+            GridPane.rowIndex="0"
             GridPane.columnIndex="0"
-    />
+            tabClosingPolicy="UNAVAILABLE"
+            side="BOTTOM"
+    >
 
-    <fx:include source="facts_list.fxml"
-                GridPane.rowIndex="2"
-                GridPane.columnIndex="0"
-                visible="true"
-    />
+            <!-- Facts Tab -->
+            <Tab text="Facts">
+                <VBox>
+                <fx:include source="fact_create.fxml"/>
+                <Separator/>
+                <fx:include source="facts_list.fxml"/>
+                </VBox>
+            </Tab>
 
-    <Separator
-            GridPane.rowIndex="3"
-            GridPane.columnIndex="0"
-    />
+            <!-- Entities Tab -->
+            <Tab text="Entities">
+                <fx:include source="entities_list.fxml"/>
+            </Tab>
 
-
-    <fx:include source="relationships_list.fxml"
-                GridPane.rowIndex="4"
-                GridPane.columnIndex="0"
-                visible="true"
-    />
-
-    <fx:include source="entities_list.fxml"
-                GridPane.rowIndex="5"
-                GridPane.columnIndex="0"
-                visible="true"
-    />
-
+            <!-- Relationships Tab -->
+            <Tab text="Relationships">
+                <fx:include source="relationships_list.fxml"/>
+            </Tab>
+            <!-- -->
+    </TabPane>
 
     <!-- messages for application operations -->
     <VBox spacing="2"
-          GridPane.rowIndex="6"
+          GridPane.rowIndex="1"
           GridPane.columnIndex="0"
+          styleClass="app-msg"
     >
-        <Text fx:id="txt_msg"
+        <Text fx:id="txt_app_msg"
               fill="firebrick"/>
     </VBox>
-
-
 </GridPane>
