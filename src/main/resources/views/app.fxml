@@ -35,31 +35,38 @@
     </rowConstraints>
 
     <TabPane
+            fx:id="tabs"
             GridPane.rowIndex="0"
             GridPane.columnIndex="0"
             tabClosingPolicy="UNAVAILABLE"
             side="BOTTOM"
     >
 
-            <!-- Facts Tab -->
-            <Tab text="Facts">
-                <VBox>
+        <!-- Facts Tab -->
+        <Tab text="Facts"
+             fx:id="tab_facts"
+        >
+            <VBox>
                 <fx:include source="fact_create.fxml"/>
                 <Separator/>
                 <fx:include source="facts_list.fxml"/>
-                </VBox>
-            </Tab>
+            </VBox>
+        </Tab>
 
-            <!-- Entities Tab -->
-            <Tab text="Entities">
-                <fx:include source="entities_list.fxml"/>
-            </Tab>
+        <!-- Entities Tab -->
+        <Tab text="Entities"
+             fx:id="tab_entities"
+        >
+            <fx:include source="entities_list.fxml"/>
+        </Tab>
 
-            <!-- Relationships Tab -->
-            <Tab text="Relationships">
-                <fx:include source="relationships_list.fxml"/>
-            </Tab>
-            <!-- -->
+        <!-- Relationships Tab -->
+        <Tab text="Relationships"
+             fx:id="tab_relationships"
+        >
+            <fx:include source="relationships_list.fxml"/>
+        </Tab>
+        <!-- -->
     </TabPane>
 
     <!-- messages for application operations -->
