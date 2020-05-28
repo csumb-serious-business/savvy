@@ -32,7 +32,7 @@ public class AppController implements Initializable {
 
   private EmbeddedNeo4j _db;
 
-  @FXML private Text txt_msg;
+  @FXML private Text txt_app_msg;
 
   public AppController() {
     instance = this;
@@ -78,18 +78,18 @@ public class AppController implements Initializable {
   // fact created -> message
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactCreated ev) {
-    txt_msg.setText("Saved fact: " + ev.fact);
+    txt_app_msg.setText("Saved fact: " + ev.fact);
   }
 
   // fact updated -> message
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactUpdated ev) {
-    txt_msg.setText("Updated fact: " + ev.previous + " -> " + ev.current);
+    txt_app_msg.setText("Updated fact: " + ev.previous + " -> " + ev.current);
   }
 
   // fact deleted -> message
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(FactDeleted ev) {
-    txt_msg.setText("Deleted fact: " + ev.fact);
+    txt_app_msg.setText("Deleted fact: " + ev.fact);
   }
 }

@@ -1,0 +1,14 @@
+/* pad around tab contents */
+.tab-pane > .tab-content-area > * {
+    -fx-padding: 10 10 10 10;
+}
+
+/* vertical padding for separators */
+.separator {
+    -fx-padding: 10 0 10 0;
+}
+
+/* horizontal padding for app message */
+.app-msg {
+    -fx-padding: 0 20 10 20;
+}
