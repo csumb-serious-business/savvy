@@ -1,13 +1,11 @@
 package savvy.ui.fact_create;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.TextFields;
 import org.greenrobot.eventbus.EventBus;
@@ -20,6 +18,12 @@ import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.events.DoFactCreate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.RelationshipsRead;
+
+import java.net.URL;
+import java.util.Collection;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** Controller for the Fact Creation view */
 public class FactCreateController implements Initializable {
@@ -75,7 +79,23 @@ public class FactCreateController implements Initializable {
     _rb = TextFields.bindAutoCompletion(_relationship, rels);
   }
 
+
   // === events ==================================================================================\\
+  /**
+   * Handle action related to input (in this case specifically only responds to
+   * keyboard event ENTER when on the object field).
+   *
+   * @param event Input event.
+   */
+  @FXML
+  private void handleKeyInput(final InputEvent event) {
+    if (event instanceof KeyEvent) {
+      final KeyEvent keyEvent = (KeyEvent) event;
+      if (keyEvent.getCode() == KeyCode.ENTER) {
+        save_action();
+      }
+    }
+  }
   // --- Emitters --------------------------------------------------------------------------------\\
   @Override
   public void initialize(URL location, ResourceBundle resources) {
