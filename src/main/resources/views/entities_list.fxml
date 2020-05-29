@@ -22,7 +22,7 @@
             GridPane.columnIndex="0"
     >
         <!-- filter field -->
-        <TextField fx:id="_filter"/>
+        <TextField fx:id="_filter" onKeyPressed="#handleKeyInput"/>
 
         <!-- load button -->
         <Region HBox.hgrow="ALWAYS"/>

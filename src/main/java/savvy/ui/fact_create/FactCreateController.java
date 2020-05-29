@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.TextFields;
 import org.greenrobot.eventbus.EventBus;
@@ -76,6 +79,21 @@ public class FactCreateController implements Initializable {
   }
 
   // === events ==================================================================================\\
+  /**
+   * Handle action related to input (in this case specifically only responds to keyboard event ENTER
+   * when on the object field).
+   *
+   * @param event Input event.
+   */
+  @FXML
+  private void handleKeyInput(final InputEvent event) {
+    if (event instanceof KeyEvent) {
+      final KeyEvent keyEvent = (KeyEvent) event;
+      if (keyEvent.getCode() == KeyCode.ENTER) {
+        save_action();
+      }
+    }
+  }
   // --- Emitters --------------------------------------------------------------------------------\\
   @Override
   public void initialize(URL location, ResourceBundle resources) {
