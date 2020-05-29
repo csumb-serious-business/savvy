@@ -44,6 +44,34 @@ public class Entities {
   }
 
   /**
+   * creaets an entity based on an already existing one if it exists
+   * otherwise creates a new one
+   * @param entities to search through
+   * @param identifier to find
+   * @return a found entity or a new one
+   */
+  public static EntityMapping mapEntity(Collection<Entity> entities, String identifier) {
+    Entity e;
+    var m = "";
+
+    // extract modifiers
+    var split = identifier.split(";");
+    if (!split[0].equals(identifier)) {
+      m = split[0].trim();
+      identifier = split[1].trim();
+    }
+
+    // name exists verbatim -> use it
+    var found = Entities.getEntitiesWithIdentifier(entities, identifier);
+    if (found.isEmpty()) {
+      e = new Entity(identifier, Set.of());
+    } else {
+      e = found.get(0);
+    }
+    return new EntityMapping(e, m);
+  }
+
+  /**
    * get a list of entities that match from this Entities items
    *
    * @param identifier to filter

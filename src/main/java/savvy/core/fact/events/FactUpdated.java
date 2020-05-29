@@ -21,12 +21,12 @@ public class FactUpdated {
 
     // entity changes -> diff
     var changes = new HashMap<Entity, Entity>();
-    if (!previous.getSubject().equals(current.getSubject())) {
-      changes.put(previous.getSubject(), current.getSubject());
+    if (!previous.subject.equals(current.subject)) {
+      changes.put(previous.subject, current.subject);
     }
 
-    if (!previous.getObject().equals(current.getObject())) {
-      changes.put(previous.getObject(), current.getObject());
+    if (!previous.object.equals(current.object)) {
+      changes.put(previous.object, current.object);
     }
     entityChanges = changes;
   }

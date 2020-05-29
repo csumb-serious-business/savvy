@@ -1,6 +1,11 @@
 package savvy.core.db;
 
-import static savvy.core.db.Constants.*;
+import static savvy.core.db.Constants.ALIASES;
+import static savvy.core.db.Constants.CORRELATES;
+import static savvy.core.db.Constants.CYPHER_MERGE;
+import static savvy.core.db.Constants.ENTITY_LABEL;
+import static savvy.core.db.Constants.MODIFIER;
+import static savvy.core.db.Constants.NAME;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,12 +16,19 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.traversal.Evaluators;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
+import savvy.core.fact.Modifier;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 
+/**
+ * Database access object
+ */
 public class Dao {
+  private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
   private final GraphDatabaseService _service;
 
   public Dao(EmbeddedNeo4j en4j) {
@@ -32,7 +44,8 @@ public class Dao {
    * @param relationship between the subject and object
    * @param object of the fact
    */
-  public void createFact(Entity subject, Relationship relationship, Entity object) {
+  public void createFact(
+      Entity subject, Relationship relationship, Entity object, Modifier modifier) {
     createEntity(subject);
     createEntity(object);
 
@@ -42,10 +55,12 @@ public class Dao {
 
       var rel = subNode.createRelationshipTo(objNode, RelTypes.f2_1);
       rel.setProperty(NAME, relationship.getName());
-      rel.setProperty(CORRELATES, new SerDe<Correlate>().serialize(relationship.getCorrelates()));
+      rel.setProperty(CORRELATES, new SerDe<Correlate>().fromSet(relationship.getCorrelates()));
+      rel.setProperty(MODIFIER, new SerDe<Modifier>().fromObject(modifier));
 
       tx.commit();
     }
+    log.info("createFact -- s: {}, r: {}, o: {}, m: {}", subject, relationship, object, modifier);
   }
 
   /**
@@ -54,7 +69,7 @@ public class Dao {
    * @param fact to add
    */
   public void createFact(Fact fact) {
-    createFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
+    createFact(fact.subject, fact.relationship, fact.object, fact.modifier);
   }
 
   /**
@@ -96,7 +111,7 @@ public class Dao {
    * @param fact to delete
    */
   public void deleteFact(Fact fact) {
-    deleteFact(fact.getSubject(), fact.getRelationship(), fact.getObject());
+    deleteFact(fact.subject, fact.relationship, fact.object);
   }
 
   /**
@@ -165,16 +180,19 @@ public class Dao {
   private Fact pathAsFact(Path path) {
     var rel = path.lastRelationship();
     var r = rel.getProperty(NAME).toString();
-    var rc = new SerDe<Correlate>().deserialize(rel.getProperty(CORRELATES));
+    var rc = new SerDe<Correlate>().toSet(rel.getProperty(CORRELATES));
+    var rm = new SerDe<Modifier>().toType(rel.getProperty(MODIFIER));
 
     var serde = new SerDe<String>();
     var s = rel.getStartNode().getProperty(NAME).toString();
-    var sa = serde.deserialize(rel.getStartNode().getProperty(ALIASES));
+    var sa = serde.toSet(rel.getStartNode().getProperty(ALIASES));
 
     var o = rel.getEndNode().getProperty(NAME).toString();
-    var oa = serde.deserialize(rel.getEndNode().getProperty(ALIASES));
+    var oa = serde.toSet(rel.getEndNode().getProperty(ALIASES));
 
-    return new Fact(new Entity(s, sa), new Relationship(r, rc), new Entity(o, oa));
+    var fact = new Fact(new Entity(s, sa), new Relationship(r, rc), new Entity(o, oa), rm);
+    //    log.info("fact: {}, modifiers: {}", fact, rm);
+    return fact;
   }
 
   // --- entities --------------------------------------------------------------------------------\\
@@ -190,7 +208,7 @@ public class Dao {
       var params = new HashMap<String, Object>();
       params.put(NAME, entity.getName());
       Node result = tx.execute(CYPHER_MERGE, params).<Node>columnAs("n").next();
-      result.setProperty(ALIASES, new SerDe<String>().serialize(entity.getAliases()));
+      result.setProperty(ALIASES, new SerDe<String>().fromSet(entity.getAliases()));
       tx.commit();
       // return result;
     }
@@ -209,7 +227,7 @@ public class Dao {
       try (var tx = _service.beginTx()) {
         var entity = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
 
-        entity.setProperty(ALIASES, new SerDe<String>().serialize(current.getAliases()));
+        entity.setProperty(ALIASES, new SerDe<String>().fromSet(current.getAliases()));
 
         tx.commit();
       }
@@ -217,7 +235,7 @@ public class Dao {
       try (var tx = _service.beginTx()) {
         var pNode = tx.findNode(ENTITY_LABEL, NAME, previous.getName());
         pNode.setProperty(NAME, current.getName());
-        pNode.setProperty(ALIASES, new SerDe<String>().serialize(current.getAliases()));
+        pNode.setProperty(ALIASES, new SerDe<String>().fromSet(current.getAliases()));
 
         tx.commit();
       }
@@ -236,7 +254,7 @@ public class Dao {
           .forEach(
               n -> {
                 var name = n.getProperty(NAME).toString();
-                var aliases = new SerDe<String>().deserialize((byte[]) n.getProperty(ALIASES));
+                var aliases = new SerDe<String>().toSet((byte[]) n.getProperty(ALIASES));
                 entities.add(new Entity(name, aliases));
                 // log.info("reading -- name: {}, aliases: {}", name, aliases);
               });
@@ -254,7 +272,7 @@ public class Dao {
    */
   public Set<Relationship> readAllRelationships() {
     var relationships = new HashSet<Relationship>();
-    readAllFacts().forEach(f -> relationships.add(f.getRelationship()));
+    readAllFacts().forEach(f -> relationships.add(f.relationship));
     //    log.info("relationships: {}", relationships);
 
     return relationships;
@@ -291,7 +309,7 @@ public class Dao {
                     }
                     if (!previous.getCorrelates().equals(current.getCorrelates())) {
                       rel.setProperty(
-                          CORRELATES, new SerDe<Correlate>().serialize(current.getCorrelates()));
+                          CORRELATES, new SerDe<Correlate>().fromSet(current.getCorrelates()));
                     }
                   }
                 }

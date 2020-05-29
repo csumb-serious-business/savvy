@@ -23,7 +23,6 @@ import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.fact.events.FactsSearched;
-import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.Relationships;
 import savvy.core.relationship.events.RelationshipsRead;
@@ -67,42 +66,22 @@ public class Facts {
    * @return the created fact in its final form
    */
   private Fact factCreate(String subject, String relationship, String object) {
-    Entity s;
-    // subject exists -> use existent
-    var eFound = Entities.getEntitiesWithIdentifier(_entities, subject);
-    if (eFound.isEmpty()) {
-      s = new Entity(subject, Set.of());
-    } else {
-      s = eFound.get(0);
-    }
+    var sm = Entities.mapEntity(_entities, subject);
+    var s = sm.entity;
 
-    Entity o;
-    // object exists -> use existent
-    eFound = Entities.getEntitiesWithIdentifier(_entities, object);
-    if (eFound.isEmpty()) {
-      o = new Entity(object, Set.of());
-    } else {
-      o = eFound.get(0);
-    }
+    var om = Entities.mapEntity(_entities, object);
+    var o = om.entity;
 
-    Relationship r;
-    boolean rIsOutbound = true;
-    // relationship exists -> use existent
-    var rFound = Relationships.getRelationshipsWithForm(_relationships, relationship);
-    if (rFound.isEmpty()) {
-      r =
-          new Relationship(
-              relationship, Set.of(new Correlate(relationship, ("[←" + relationship + "]"))));
-    } else {
-      r = rFound.get(0);
-      rIsOutbound = r.hasOutboundCorrelate(relationship);
-    }
+    var rm = Relationships.mapRelationship(_relationships, relationship);
+    var r = rm.relationship;
+
+    Modifier m = new Modifier(rm.isOutbound, sm.modifiers, rm.modifiers, om.modifiers);
 
     Fact fact;
-    if (rIsOutbound) {
-      fact = new Fact(s, r, o);
+    if (rm.isOutbound) {
+      fact = new Fact(s, r, o, m);
     } else {
-      fact = new Fact(o, r, s);
+      fact = new Fact(o, r, s, m);
     }
 
     _dao.createFact(fact);
@@ -134,9 +113,7 @@ public class Facts {
 
     var created =
         factCreate(
-            current.getSubject().getName(),
-            current.getRelationship().getName(),
-            current.getObject().getName());
+            current.subject.getName(), current.relationship.getName(), current.object.getName());
 
     return Optional.of(created);
   }
