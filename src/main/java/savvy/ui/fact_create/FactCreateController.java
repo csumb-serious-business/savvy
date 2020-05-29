@@ -1,10 +1,5 @@
 package savvy.ui.fact_create;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
@@ -24,6 +19,12 @@ import savvy.core.fact.events.DoFactCreate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.RelationshipsRead;
 
+import java.net.URL;
+import java.util.Collection;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /** Controller for the Fact Creation view */
 public class FactCreateController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -40,6 +41,7 @@ public class FactCreateController implements Initializable {
   public void positionCaret() {
     _subject.requestFocus();
     _subject.positionCaret(0);
+    _subject.selectAll();
   }
   /**
    * updates the autocomplete filter
