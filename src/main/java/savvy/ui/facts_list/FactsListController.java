@@ -1,5 +1,11 @@
 package savvy.ui.facts_list;
 
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
@@ -23,13 +29,6 @@ import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactUpdated;
 import savvy.core.fact.events.FactsSearched;
 import savvy.core.relationship.events.RelationshipUpdated;
-
-import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /** Controller for the Fact Item list and filter */
 public class FactsListController implements Initializable {
