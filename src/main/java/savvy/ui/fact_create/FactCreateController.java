@@ -36,6 +36,12 @@ public class FactCreateController implements Initializable {
   private AutoCompletionBinding<String> _rb = null;
   private AutoCompletionBinding<String> _ob = null;
 
+  //  moves the caret to a new position
+  public void positionCaret() {
+    _subject.requestFocus();
+    _subject.positionCaret(0);
+    _subject.selectAll();
+  }
   /**
    * updates the autocomplete filter
    *
@@ -102,6 +108,7 @@ public class FactCreateController implements Initializable {
 
   /** saves a fact */
   public void save_action() {
+    positionCaret(); //  moves the caret to a new position
     EventBus.getDefault()
         .post(new DoFactCreate(_subject.getText(), _relationship.getText(), _object.getText()));
   }
