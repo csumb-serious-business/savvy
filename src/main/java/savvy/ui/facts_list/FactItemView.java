@@ -57,7 +57,7 @@ public class FactItemView extends HBox {
   private void viewMode() {
     inEditMode = false;
     var label = new Label();
-    label.setText(_fact.toString());
+    label.setText(_fact.toStringWithMods());
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -85,15 +85,29 @@ public class FactItemView extends HBox {
     final double width = this.widthProperty().doubleValue() / 5.0d;
 
     var subject = new TextField();
-    subject.setText(_fact.getSubject().getName());
+    var sTxt = _fact.subject.getName();
+    if (!_fact.modifier.subject.isBlank()) {
+      sTxt = _fact.modifier.subject + "; " + sTxt;
+    }
+
+    subject.setText(sTxt);
     subject.setMaxWidth(width);
 
     var relationship = new TextField();
-    relationship.setText(_fact.getRelationship().getName());
+    var rTxt = _fact.relationship.getName();
+    if (!_fact.modifier.relationship.isBlank()) {
+      rTxt = _fact.modifier.relationship + "; " + rTxt;
+    }
+
+    relationship.setText(rTxt);
     relationship.setMaxWidth(width);
 
     var object = new TextField();
-    object.setText(_fact.getObject().getName());
+    var oTxt = _fact.object.getName();
+    if (!_fact.modifier.object.isBlank()) {
+      oTxt = _fact.modifier.object + "; " + oTxt;
+    }
+    object.setText(oTxt);
     object.setMaxWidth(width);
 
     var gap = new Region();
@@ -108,11 +122,14 @@ public class FactItemView extends HBox {
     btn_save.setText("Save");
     btn_save.setOnAction(
         ev -> {
+          // todo -- this should look at verbatim instead of components
+
           // go straight to view-mode if no change
           var s = new Entity(subject.getText(), Set.of());
           var r = new Relationship(relationship.getText(), Set.of());
           var o = new Entity(object.getText(), Set.of());
-          var fact = new Fact(s, r, o);
+          var m = this._fact.modifier;
+          var fact = new Fact(s, r, o, m);
 
           if (this._fact.equals(fact)) {
             this.viewMode();

@@ -10,6 +10,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.db.Dao;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
@@ -25,21 +26,68 @@ import savvy.core.relationship.events.RelationshipsRead;
 public class Relationships {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  private final Set<Relationship> _items;
+  private final Set<Relationship> _items = new HashSet<>();
 
-  private EmbeddedNeo4j _db;
+  private Dao _dao;
 
-  public Relationships() {
-    _items = new HashSet<>();
-  }
-
+  /**
+   * filters a list of relationships down to those containing a correlate
+   *
+   * @param relationships to search within
+   * @param correlate to find
+   * @return a list of matching relationships
+   */
   public static List<Relationship> getRelationshipsWithForm(
       Collection<Relationship> relationships, String correlate) {
     return relationships.stream().filter(r -> r.hasForm(correlate)).collect(Collectors.toList());
   }
 
+  /**
+   * filters internal relationships down to those containing a correlate
+   *
+   * @param correlate to find
+   * @return a list of matching relationships
+   */
   public List<Relationship> getRelationshipsWithForm(String correlate) {
     return Relationships.getRelationshipsWithForm(_items, correlate);
+  }
+
+  /**
+   * creates a relationship based on an already existing one if it exists otherwise creates a new
+   * one
+   *
+   * @param relationships to search through
+   * @param relationship correlate to find
+   * @return a found relationship or a new one
+   */
+  public static RelationshipMapping mapRelationship(
+      Collection<Relationship> relationships, String relationship) {
+    Relationship r;
+    var isOutbound = true;
+
+    var m = "";
+
+    // extract modifiers
+    var split = relationship.split(";");
+    if (!split[0].equals(relationship)) {
+      m = split[0].trim();
+      relationship = split[1].trim();
+    }
+
+    // relationship exists verbatim -> use it
+
+    // relationship exists -> use existent
+    var found = Relationships.getRelationshipsWithForm(relationships, relationship);
+    if (found.isEmpty()) {
+      r =
+          new Relationship(
+              relationship, Set.of(new Correlate(relationship, ("[←" + relationship + "]"))));
+    } else {
+      r = found.get(0);
+      isOutbound = r.hasOutboundCorrelate(relationship);
+    }
+
+    return new RelationshipMapping(r, isOutbound, m);
   }
 
   /**
@@ -48,7 +96,7 @@ public class Relationships {
    */
   public List<Relationship> refresh() {
     _items.clear();
-    _items.addAll(_db.readAllRelationships());
+    _items.addAll(_dao.readAllRelationships());
 
     return _items.stream().sorted().collect(Collectors.toList());
   }
@@ -64,7 +112,7 @@ public class Relationships {
       return false;
     }
 
-    _db.updateRelationship(previous, current);
+    _dao.updateRelationship(previous, current);
 
     return true;
   }
@@ -87,10 +135,10 @@ public class Relationships {
   /**
    * initializes this with a given db
    *
-   * @param db to use
+   * @param en4j to use
    */
-  public void init(EmbeddedNeo4j db) {
-    _db = db;
+  public void init(EmbeddedNeo4j en4j) {
+    _dao = new Dao(en4j);
 
     // register with event bus
     EventBus.getDefault().register(this);

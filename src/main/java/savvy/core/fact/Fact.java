@@ -11,14 +11,24 @@ import savvy.core.relationship.Relationship;
 public class Fact implements Comparable<Fact> {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-  private final Entity subject;
-  private final Relationship relationship;
-  private final Entity object;
+  public final Entity subject;
+  public final Relationship relationship;
+  public final Entity object;
+  public final Modifier modifier;
 
-  public Fact(Entity subject, Relationship relationship, Entity object) {
+  //  public Fact(Entity subject, Relationship relationship, Entity object) {
+  //    this(
+  //        subject,
+  //        relationship,
+  //        object,
+  //        new Modifier(true, subject.getName(), relationship.getName(), object.getName()));
+  //  }
+
+  public Fact(Entity subject, Relationship relationship, Entity object, Modifier modifier) {
     this.subject = subject;
     this.relationship = relationship;
     this.object = object;
+    this.modifier = modifier;
   }
 
   @Override
@@ -28,7 +38,8 @@ public class Fact implements Comparable<Fact> {
     Fact fact = (Fact) o;
     return subject.equals(fact.subject)
         && relationship.equals(fact.relationship)
-        && object.equals(fact.object);
+        && object.equals(fact.object)
+        && modifier.equals(fact.modifier);
   }
 
   @Override
@@ -41,16 +52,19 @@ public class Fact implements Comparable<Fact> {
     return subject.getName() + " | " + relationship.getName() + " | " + object.getName();
   }
 
-  public Entity getSubject() {
-    return subject;
-  }
+  public String toStringWithMods() {
+    var s =
+        !modifier.subject.isBlank()
+            ? modifier.subject + " " + subject.getName()
+            : subject.getName();
+    var r =
+        !modifier.relationship.isBlank()
+            ? modifier.relationship + " " + relationship.getName()
+            : relationship.getName();
 
-  public Relationship getRelationship() {
-    return relationship;
-  }
-
-  public Entity getObject() {
-    return object;
+    var o =
+        !modifier.object.isBlank() ? modifier.object + " " + object.getName() : object.getName();
+    return s + " | " + r + " | " + o;
   }
 
   public Set<Entity> getEntities() {

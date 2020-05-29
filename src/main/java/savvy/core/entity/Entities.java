@@ -11,6 +11,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.db.Dao;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.events.DoEntitiesFilter;
 import savvy.core.entity.events.DoEntitiesRead;
@@ -28,7 +29,7 @@ public class Entities {
 
   private final Set<Entity> _items = new HashSet<>();
 
-  private EmbeddedNeo4j _db;
+  private Dao _dao;
 
   /**
    * given a collection of entities, finds and returns those that have a matching identifier
@@ -40,6 +41,34 @@ public class Entities {
   public static List<Entity> getEntitiesWithIdentifier(
       Collection<Entity> entities, String identifier) {
     return entities.stream().filter(i -> i.hasIdentifier(identifier)).collect(Collectors.toList());
+  }
+
+  /**
+   * creaets an entity based on an already existing one if it exists otherwise creates a new one
+   *
+   * @param entities to search through
+   * @param identifier to find
+   * @return a found entity or a new one
+   */
+  public static EntityMapping mapEntity(Collection<Entity> entities, String identifier) {
+    Entity e;
+    var m = "";
+
+    // extract modifiers
+    var split = identifier.split(";");
+    if (!split[0].equals(identifier)) {
+      m = split[0].trim();
+      identifier = split[1].trim();
+    }
+
+    // name exists verbatim -> use it
+    var found = Entities.getEntitiesWithIdentifier(entities, identifier);
+    if (found.isEmpty()) {
+      e = new Entity(identifier, Set.of());
+    } else {
+      e = found.get(0);
+    }
+    return new EntityMapping(e, m);
   }
 
   /**
@@ -58,7 +87,7 @@ public class Entities {
    */
   private List<Entity> refresh() {
     _items.clear();
-    _items.addAll(_db.readAllEntities());
+    _items.addAll(_dao.readAllEntities());
 
     return new ArrayList<>(_items).stream().sorted().collect(Collectors.toList());
   }
@@ -74,7 +103,7 @@ public class Entities {
       return false;
     }
 
-    _db.updateEntity(previous, current);
+    _dao.updateEntity(previous, current);
     return true;
   }
 
@@ -99,10 +128,10 @@ public class Entities {
   /**
    * initialize this with a given db
    *
-   * @param db to use
+   * @param en4j to use
    */
-  public void init(EmbeddedNeo4j db) {
-    _db = db;
+  public void init(EmbeddedNeo4j en4j) {
+    _dao = new Dao(en4j);
 
     // register with event bus
     EventBus.getDefault().register(this);
