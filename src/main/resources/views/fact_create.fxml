@@ -12,7 +12,7 @@
     <!-- 3 fields for sub, rel & obj -->
     <TextField fx:id="_subject"/>
     <TextField fx:id="_relationship"/>
-    <TextField fx:id="_object"/>
+    <TextField fx:id="_object" onKeyPressed="#handleKeyInput"/>
     <!-- save button -->
     <Region HBox.hgrow="SOMETIMES"/>
     <Button onAction="#save_action">Save</Button>
