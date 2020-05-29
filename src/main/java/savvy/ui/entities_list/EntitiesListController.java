@@ -96,6 +96,8 @@ public class EntitiesListController implements Initializable {
     log.info("filter entities list: {}", filter);
 
     EventBus.getDefault().post(new DoEntitiesFilter(filter));
+    _filter.clear();
+    _filter.requestFocus();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\

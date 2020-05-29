@@ -106,6 +106,8 @@ public class FactsListController implements Initializable {
     lastFilter = filter;
     log.info("filter facts list: {}", filter);
     EventBus.getDefault().post(new DoFactsSearch(filter));
+    _filter.clear();
+    _filter.requestFocus();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\

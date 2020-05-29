@@ -93,6 +93,8 @@ public class RelationshipsListController implements Initializable {
     log.info("filter relationships list: {}", filter);
 
     EventBus.getDefault().post(new DoRelationshipsFilter(filter));
+    _filter.clear();
+    _filter.requestFocus();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\
