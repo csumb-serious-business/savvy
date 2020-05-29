@@ -10,6 +10,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.db.Dao;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.fact.events.FactCreated;
 import savvy.core.fact.events.FactDeleted;
@@ -26,8 +27,7 @@ public class Relationships {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
   private final Set<Relationship> _items;
-
-  private EmbeddedNeo4j _db;
+  private Dao _dao;
 
   public Relationships() {
     _items = new HashSet<>();
@@ -48,7 +48,7 @@ public class Relationships {
    */
   public List<Relationship> refresh() {
     _items.clear();
-    _items.addAll(_db.readAllRelationships());
+    _items.addAll(_dao.readAllRelationships());
 
     return _items.stream().sorted().collect(Collectors.toList());
   }
@@ -64,7 +64,7 @@ public class Relationships {
       return false;
     }
 
-    _db.updateRelationship(previous, current);
+    _dao.updateRelationship(previous, current);
 
     return true;
   }
@@ -87,10 +87,10 @@ public class Relationships {
   /**
    * initializes this with a given db
    *
-   * @param db to use
+   * @param en4j to use
    */
-  public void init(EmbeddedNeo4j db) {
-    _db = db;
+  public void init(EmbeddedNeo4j en4j) {
+    _dao = new Dao(en4j);
 
     // register with event bus
     EventBus.getDefault().register(this);

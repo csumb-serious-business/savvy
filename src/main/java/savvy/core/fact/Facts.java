@@ -10,6 +10,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.db.Dao;
 import savvy.core.db.EmbeddedNeo4j;
 import savvy.core.entity.Entities;
 import savvy.core.entity.Entity;
@@ -33,7 +34,7 @@ public class Facts {
   private final Set<Fact> _items = new HashSet<>();
   private final Set<Entity> _entities = new HashSet<>();
   private final Set<Relationship> _relationships = new HashSet<>();
-  private EmbeddedNeo4j _db;
+  private Dao _dao;
 
   /**
    * searches the database for related facts
@@ -49,9 +50,9 @@ public class Facts {
 
     _items.clear();
     if (filter.isBlank()) {
-      _items.addAll(_db.readAllFacts());
+      _items.addAll(_dao.readAllFacts());
     } else {
-      _items.addAll(_db.readRelatedFacts(filter));
+      _items.addAll(_dao.readRelatedFacts(filter));
     }
     return _items.stream().sorted().collect(Collectors.toList());
   }
@@ -104,7 +105,7 @@ public class Facts {
       fact = new Fact(o, r, s);
     }
 
-    _db.createFact(fact);
+    _dao.createFact(fact);
     return fact;
   }
 
@@ -114,7 +115,7 @@ public class Facts {
    * @param fact to delete
    */
   private void factDelete(Fact fact) {
-    _db.deleteFact(fact);
+    _dao.deleteFact(fact);
   }
 
   /**
@@ -146,10 +147,10 @@ public class Facts {
   /**
    * initialize this with a given db
    *
-   * @param db to use
+   * @param en4j to use
    */
-  public void init(EmbeddedNeo4j db) {
-    _db = db;
+  public void init(EmbeddedNeo4j en4j) {
+    _dao = new Dao(en4j);
     EventBus.getDefault().register(this);
   }
 
