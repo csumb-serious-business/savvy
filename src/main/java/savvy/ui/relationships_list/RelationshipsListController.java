@@ -1,5 +1,10 @@
 package savvy.ui.relationships_list;
 
+import java.net.URL;
+import java.util.Collection;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListView;
@@ -18,12 +23,6 @@ import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipsFilter;
 import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
-
-import java.net.URL;
-import java.util.Collection;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class RelationshipsListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -68,8 +67,8 @@ public class RelationshipsListController implements Initializable {
 
   // === events ==================================================================================\\
   /**
-   * Handle action related to input (in this case specifically only responds to
-   * keyboard event ENTER when on the filter field).
+   * Handle action related to input (in this case specifically only responds to keyboard event ENTER
+   * when on the filter field).
    *
    * @param event Input event.
    */
