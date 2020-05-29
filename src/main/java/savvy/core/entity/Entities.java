@@ -44,8 +44,8 @@ public class Entities {
   }
 
   /**
-   * creaets an entity based on an already existing one if it exists
-   * otherwise creates a new one
+   * creaets an entity based on an already existing one if it exists otherwise creates a new one
+   *
    * @param entities to search through
    * @param identifier to find
    * @return a found entity or a new one

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.fact.Fact;
-import savvy.core.fact.Modifier;
 import savvy.core.fact.events.DoFactDelete;
 import savvy.core.fact.events.DoFactUpdate;
 import savvy.core.relationship.Relationship;
@@ -87,7 +86,7 @@ public class FactItemView extends HBox {
 
     var subject = new TextField();
     var sTxt = _fact.subject.getName();
-    if(!_fact.modifier.subject.isBlank()){
+    if (!_fact.modifier.subject.isBlank()) {
       sTxt = _fact.modifier.subject + "; " + sTxt;
     }
 
@@ -96,7 +95,7 @@ public class FactItemView extends HBox {
 
     var relationship = new TextField();
     var rTxt = _fact.relationship.getName();
-    if(!_fact.modifier.relationship.isBlank()){
+    if (!_fact.modifier.relationship.isBlank()) {
       rTxt = _fact.modifier.relationship + "; " + rTxt;
     }
 
@@ -105,7 +104,7 @@ public class FactItemView extends HBox {
 
     var object = new TextField();
     var oTxt = _fact.object.getName();
-    if(!_fact.modifier.object.isBlank()){
+    if (!_fact.modifier.object.isBlank()) {
       oTxt = _fact.modifier.object + "; " + oTxt;
     }
     object.setText(oTxt);

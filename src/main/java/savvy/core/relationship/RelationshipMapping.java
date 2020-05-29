@@ -1,8 +1,6 @@
 package savvy.core.relationship;
 
-/**
- * conveniently wraps relevant relationship properties for verbatim views
- */
+/** conveniently wraps relevant relationship properties for verbatim views */
 public class RelationshipMapping {
   public final Relationship relationship;
   public final boolean isOutbound;

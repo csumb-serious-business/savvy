@@ -24,9 +24,7 @@ import savvy.core.fact.Modifier;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 
-/**
- * Database access object
- */
+/** Database access object */
 public class Dao {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
   private final GraphDatabaseService _service;

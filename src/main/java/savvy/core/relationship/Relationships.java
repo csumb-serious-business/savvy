@@ -32,6 +32,7 @@ public class Relationships {
 
   /**
    * filters a list of relationships down to those containing a correlate
+   *
    * @param relationships to search within
    * @param correlate to find
    * @return a list of matching relationships
@@ -43,6 +44,7 @@ public class Relationships {
 
   /**
    * filters internal relationships down to those containing a correlate
+   *
    * @param correlate to find
    * @return a list of matching relationships
    */
@@ -51,8 +53,9 @@ public class Relationships {
   }
 
   /**
-   * creates a relationship based on an already existing one if it exists
-   * otherwise creates a new one
+   * creates a relationship based on an already existing one if it exists otherwise creates a new
+   * one
+   *
    * @param relationships to search through
    * @param relationship correlate to find
    * @return a found relationship or a new one

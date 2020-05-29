@@ -1,14 +1,13 @@
 package savvy.core.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unchecked")
 public class SerDe<T> {
@@ -50,7 +49,7 @@ public class SerDe<T> {
    * @param bytes to convert
    * @return a set of T
    */
-   public Set<T> toSet(byte[] bytes) {
+  public Set<T> toSet(byte[] bytes) {
     var bais = new ByteArrayInputStream(bytes);
 
     try {

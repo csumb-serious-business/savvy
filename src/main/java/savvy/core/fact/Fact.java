@@ -16,13 +16,13 @@ public class Fact implements Comparable<Fact> {
   public final Entity object;
   public final Modifier modifier;
 
-//  public Fact(Entity subject, Relationship relationship, Entity object) {
-//    this(
-//        subject,
-//        relationship,
-//        object,
-//        new Modifier(true, subject.getName(), relationship.getName(), object.getName()));
-//  }
+  //  public Fact(Entity subject, Relationship relationship, Entity object) {
+  //    this(
+  //        subject,
+  //        relationship,
+  //        object,
+  //        new Modifier(true, subject.getName(), relationship.getName(), object.getName()));
+  //  }
 
   public Fact(Entity subject, Relationship relationship, Entity object, Modifier modifier) {
     this.subject = subject;
@@ -52,13 +52,18 @@ public class Fact implements Comparable<Fact> {
     return subject.getName() + " | " + relationship.getName() + " | " + object.getName();
   }
 
-  public String toStringWithMods(){
-    var s = !modifier.subject.isBlank() ? modifier.subject + " " + subject.getName() :
-    subject.getName();
-    var r = !modifier.relationship.isBlank() ? modifier.relationship + " " + relationship.getName() :
-      relationship.getName();
+  public String toStringWithMods() {
+    var s =
+        !modifier.subject.isBlank()
+            ? modifier.subject + " " + subject.getName()
+            : subject.getName();
+    var r =
+        !modifier.relationship.isBlank()
+            ? modifier.relationship + " " + relationship.getName()
+            : relationship.getName();
 
-    var o = !modifier.object.isBlank() ? modifier.object + " " + object.getName() : object.getName();
+    var o =
+        !modifier.object.isBlank() ? modifier.object + " " + object.getName() : object.getName();
     return s + " | " + r + " | " + o;
   }
 

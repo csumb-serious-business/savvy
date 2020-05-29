@@ -1,8 +1,6 @@
 package savvy.core.entity;
 
-/**
- * conveniently wraps relevant entity properties for verbatim views
- */
+/** conveniently wraps relevant entity properties for verbatim views */
 public class EntityMapping {
   public final Entity entity;
   public final String modifiers;
