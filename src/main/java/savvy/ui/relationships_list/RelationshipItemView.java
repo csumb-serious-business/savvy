@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipUpdate;
+import savvy.ui.common.TextUtils;
 
 import java.util.Set;
 import java.util.stream.Collectors;

@@ -1,5 +1,5 @@
 //https://stackoverflow.com/questions/12737829/javafx-textfield-resize-to-text-length
-package savvy.ui.relationships_list;
+package savvy.ui.common;
 
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
