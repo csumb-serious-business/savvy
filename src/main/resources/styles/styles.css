@@ -1,3 +1,17 @@
+/*open sans headings*/
+/*hind text*/
+
+/* #0A3254 : Bay Blue*/
+/* #937F55 : Golden Sand*/
+/* #436B5C : Valley Green*/
+
+/*primary colors*/
+/*Hex #112E51  */
+/*Hex #DDDAC7 */
+
+/*secondary colors*/
+/*Hex #D9EBF7 */ /*menu hover color*/
+
 /* pad around tab contents */
 .tab-pane > .tab-content-area > * {
     -fx-padding: 10 10 10 10;
@@ -11,4 +25,47 @@
 /* horizontal padding for app message */
 .app-msg {
     -fx-padding: 0 20 10 20;
+}
+
+
+.root {
+    -fx-font-size: 12px;
+    -fx-font-family: "Open Sans";
+    /*-fx-font-family: "Hind";*//*cant find hind (official school website font)*/
+    -fx-background-color: white;
+}
+
+.menu-bar {
+    -fx-background-color: #0A3254; /*menu bar blue*/
+    -fx-opacity: 1;
+}
+
+.menu-bar .label {
+    -fx-font-size: 10.0pt;
+    -fx-font-family: "Open Sans";
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 2px;
+}
+
+.menu-bar .menu-button:hover, .menu-bar .menu-button:focused, .menu-bar .menu-button:showing {
+    -fx-background: #0A3254;
+    -fx-opacity: 0.5;
+    -fx-text-fill: white;
+}
+
+.menu-item {
+    -fx-text-fill: black;
+    -fx-background: #D9EBF7;
+}
+
+.menu-item .label {
+    -fx-font-size: 10.0pt;
+    -fx-text-fill: black;
+}
+
+.menu-item .label:hover {
+    -fx-font-size: 10.0pt;
+    -fx-background: #D9EBF7;
+    -fx-text-fill: white;
 }
