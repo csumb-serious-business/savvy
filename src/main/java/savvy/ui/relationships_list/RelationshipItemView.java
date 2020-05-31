@@ -15,8 +15,9 @@ import org.slf4j.LoggerFactory;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipUpdate;
+import savvy.ui.common.TextFieldUtil;
 
-/** controller and layout for an individual Fact Item in the FactsFilterList */
+/** The type Relationship item view. */
 public class RelationshipItemView extends HBox {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -34,7 +35,6 @@ public class RelationshipItemView extends HBox {
     viewMode();
   }
 
-  /** creates & wires the layout for this item's view mode */
   private void viewMode() {
     var lbl_name = new Label();
     lbl_name.setText(_relationship.getName());
@@ -62,22 +62,17 @@ public class RelationshipItemView extends HBox {
     this.getChildren().addAll(lbl_name, lbl_correlates, gap, btn_edit);
   }
 
-  /** creates & wires the layout for this item's edit mode */
   private void editMode() {
-
-    final double width = this.widthProperty().doubleValue() / 5.0d;
 
     var name = new TextField();
     name.setText(_relationship.getName());
-    name.setMaxWidth(width);
+    TextFieldUtil.addAutoWidth(name, 70, 150);
 
     var hb_correlates = new HBox();
 
     _relationship.getCorrelates().forEach(c -> hb_correlates.getChildren().add(toUI(c)));
 
     hb_correlates.getChildren().add(toUI(new Correlate("", "")));
-
-    hb_correlates.setMaxWidth(width);
 
     var gap = new Region();
     HBox.setHgrow(gap, Priority.ALWAYS);
@@ -86,7 +81,6 @@ public class RelationshipItemView extends HBox {
     btn_cancel.setText("Cancel");
 
     btn_cancel.setOnAction(ev -> this.viewMode());
-
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(
@@ -127,11 +121,13 @@ public class RelationshipItemView extends HBox {
   private HBox toUI(Correlate correlate) {
     var txt_out = new TextField();
     txt_out.setText(correlate.outbound);
+    TextFieldUtil.addAutoWidth(txt_out, 70, 150);
 
     var txt_in = new TextField();
     txt_in.setText(correlate.inbound);
+    TextFieldUtil.addAutoWidth(txt_in, 70, 150);
 
-    var label = new Label(" -> ");
+    var label = new Label(" ⇔ ");
 
     var box = new HBox();
     box.getChildren().addAll(txt_out, label, txt_in);
@@ -149,7 +145,6 @@ public class RelationshipItemView extends HBox {
         box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
     var outgoing = ((TextField) fields.get(0)).getText();
     var incoming = ((TextField) fields.get(1)).getText();
-
     return new Correlate(outgoing, incoming);
   }
 }
