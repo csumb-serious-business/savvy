@@ -1,6 +1,7 @@
 package savvy.ui.relationships_list;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -14,14 +15,9 @@ import org.slf4j.LoggerFactory;
 import savvy.core.relationship.Correlate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipUpdate;
-import savvy.ui.common.TextUtils;
+import savvy.ui.common.TextFieldUtil;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * The type Relationship item view.
- */
+/** The type Relationship item view. */
 public class RelationshipItemView extends HBox {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -44,10 +40,10 @@ public class RelationshipItemView extends HBox {
     lbl_name.setText(_relationship.getName());
 
     var correlates =
-            _relationship.getCorrelates().stream()
-                    .map(c -> c.outbound + " ⇔ " + c.inbound)
-                    .sorted()
-                    .collect(Collectors.toList());
+        _relationship.getCorrelates().stream()
+            .map(c -> c.outbound + " ⇔ " + c.inbound)
+            .sorted()
+            .collect(Collectors.toList());
     var lbl_correlates = new Label();
     lbl_correlates.setText(String.join(", ", correlates));
 
@@ -68,11 +64,9 @@ public class RelationshipItemView extends HBox {
 
   private void editMode() {
 
-//    final double width = this.widthProperty().doubleValue() / 1.7d;
-    final double width = this.widthProperty().doubleValue();
     var name = new TextField();
-    computeSpacing(name,20);//sets spacing to roughly the width of the text
     name.setText(_relationship.getName());
+    TextFieldUtil.addAutoWidth(name, 70, 150);
 
     var hb_correlates = new HBox();
 
@@ -90,30 +84,30 @@ public class RelationshipItemView extends HBox {
     var btn_save = new Button();
     btn_save.setText("Save");
     btn_save.setOnAction(
-            ev -> {
-              var correlates =
-                      hb_correlates.getChildren().stream()
-                              .map(c -> fromUI((HBox) c))
-                              .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
-                              .collect(Collectors.toSet());
+        ev -> {
+          var correlates =
+              hb_correlates.getChildren().stream()
+                  .map(c -> fromUI((HBox) c))
+                  .filter(c -> c.inbound.length() > 0 && c.outbound.length() > 0)
+                  .collect(Collectors.toSet());
 
-              // go straight to view-mode if no change
-              var relationship = new Relationship(name.getText(), correlates);
+          // go straight to view-mode if no change
+          var relationship = new Relationship(name.getText(), correlates);
 
-              if (_relationship.equals(relationship)) {
-                this.viewMode();
-                return;
-              }
+          if (_relationship.equals(relationship)) {
+            this.viewMode();
+            return;
+          }
 
-              // update the relationship data
-              EventBus.getDefault().post(new DoRelationshipUpdate(_relationship, relationship));
+          // update the relationship data
+          EventBus.getDefault().post(new DoRelationshipUpdate(_relationship, relationship));
 
-              // update the relationship
-              this._relationship = new Relationship(name.getText(), Set.of());
+          // update the relationship
+          this._relationship = new Relationship(name.getText(), Set.of());
 
-              // go back to view mode
-              this.viewMode();
-            });
+          // go back to view mode
+          this.viewMode();
+        });
     this.getChildren().clear();
     this.getChildren().addAll(name, hb_correlates, gap, btn_cancel, btn_save);
   }
@@ -126,14 +120,14 @@ public class RelationshipItemView extends HBox {
    */
   private HBox toUI(Correlate correlate) {
     var txt_out = new TextField();
-    computeSpacing(txt_out,15);
     txt_out.setText(correlate.outbound);
+    TextFieldUtil.addAutoWidth(txt_out, 70, 150);
 
     var txt_in = new TextField();
-    computeSpacing(txt_in,15);
     txt_in.setText(correlate.inbound);
+    TextFieldUtil.addAutoWidth(txt_in, 70, 150);
 
-    var label = new Label(" -> ");
+    var label = new Label(" ⇔ ");
 
     var box = new HBox();
     box.getChildren().addAll(txt_out, label, txt_in);
@@ -148,29 +142,9 @@ public class RelationshipItemView extends HBox {
    */
   private Correlate fromUI(HBox box) {
     var fields =
-            box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
+        box.getChildren().stream().filter(TextField.class::isInstance).collect(Collectors.toList());
     var outgoing = ((TextField) fields.get(0)).getText();
     var incoming = ((TextField) fields.get(1)).getText();
     return new Correlate(outgoing, incoming);
-  }
-
-
-  /**
-   * given a TextField and spacing value, compute the length and set textfield to
-   * roughly that length not exceeding 150 units
-   * @param textField to extract width from
-   * @param spacing add spacing to the end
-   */
-  private void computeSpacing(TextField textField, double spacing) {
-    textField.setMinWidth(70);
-    textField.setPrefWidth(100);
-    textField.setMaxWidth(150);
-    textField.textProperty().addListener(new ChangeListener<String>() {
-      @Override
-      public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-        textField.setPrefWidth(TextUtils.computeTextWidth(textField.getFont(),
-                textField.getText(), 0.0D) + spacing);
-      }
-    });
   }
 }
