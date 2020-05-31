@@ -1,9 +1,6 @@
 // http://www.java2s.com/Code/Java/JavaFX/UsingFXMLtocreateaUI.htm
 package savvy.ui.menu_bar;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -24,6 +21,10 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ResourceBundle;
+
 public class MenubarController implements Initializable {
 
   @FXML private MenuBar menuBar;
@@ -42,17 +43,17 @@ public class MenubarController implements Initializable {
     // vBox
     VBox vBox = new VBox();
 
-    // creates a centered savvyLogo in the VBox
-    Image savvyLogo = new Image("savvyLogoTransparent.png");
-    ImageView imageView = new ImageView();
-    imageView.setImage(savvyLogo);
-    imageView.setPreserveRatio(true);
-    imageView.setFitWidth(400);
-    imageView.setFitHeight(300);
-    vBox.setPrefSize(400, 500);
-    vBox.setMargin(imageView, new Insets(50, 10, 50, 10)); // optional
+//    // creates a centered savvyLogo in the VBox
+//    Image savvyLogo = new Image("savvyLogoTransparent.png");
+//    ImageView imageView = new ImageView();
+//    imageView.setImage(savvyLogo);
+//    imageView.setPreserveRatio(true);
+//    imageView.setFitWidth(400);
+//    imageView.setFitHeight(300);
+//    vBox.setPrefSize(400, 500);
+//    vBox.setMargin(imageView, new Insets(50, 10, 50, 10)); // optional
     vBox.setAlignment(Pos.TOP_CENTER);
-    vBox.getChildren().add(imageView);
+//    vBox.getChildren().add(imageView);
 
     // creates centered text in the VBox
     String copyright = "\u00a9";
@@ -70,7 +71,7 @@ public class MenubarController implements Initializable {
     text.setFont(Font.font("Arial", FontWeight.BOLD, 16));
     text.setTextAlignment(TextAlignment.CENTER);
     vBox.getChildren().add(text);
-    vBox.setMargin(text, new Insets(0, 10, 50, 10)); // optional
+    vBox.setMargin(text, new Insets(50, 10, 50, 10)); // optional
 
     // creates a centered csumbLogo in the VBox
     Image csumbLogo = new Image("csumbLogoTransparent.png");

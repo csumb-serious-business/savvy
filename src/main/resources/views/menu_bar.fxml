@@ -10,7 +10,7 @@
       fx:controller="savvy.ui.menu_bar.MenubarController">
     <MenuBar fx:id="menuBar">
         <menus>
-            <Menu text="Help">
+            <Menu text="About">
                 <items>
                     <MenuItem text="License" visible="true" onAction="#handleLicenseAction"/>
                     <SeparatorMenuItem/>
