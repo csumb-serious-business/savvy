@@ -149,9 +149,56 @@ public class MenubarController implements Initializable {
     stage.show();
   }
 
-  /** Perform functionality associated with "About" menu selection or CTRL-A. */
-  private void provideAboutFunctionality() {
-    System.out.println("You clicked on About!");
+  /**
+   * Handle action related to "About" menu item.
+   *
+   * @param event Event on "About" menu item.
+   */
+  @FXML
+  private void handleShortcutGuideAction(final ActionEvent event) throws IOException {
+    showShortcutGuide();
+  }
+
+  public void showShortcutGuide() {
+    // text
+    Text header = new Text("Shortcut Guide");
+    Text text =
+        new Text(
+            "Switch to Facts Tab: CTRL + F"
+                + "\n"
+                + "\n"
+                + "Switch to Entities Tab: CTRL + E"
+                + "\n"
+                + "\n"
+                + "Switch to Relationships Tab: CTRL + R"
+                + "\n"
+                + "\n");
+    VBox textBox = new VBox(10);
+
+    header.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    textBox.setMargin(header, new Insets(50, 50, 0, 50));
+    header.setTextAlignment(TextAlignment.CENTER);
+
+    text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+    textBox.setAlignment(Pos.TOP_CENTER);
+    text.setTextAlignment(TextAlignment.LEFT);
+    textBox.setMargin(text, new Insets(0, 50, 50, 50));
+    textBox.getChildren().addAll(header, text);
+
+    Scene scene = new Scene(textBox, 600, 500);
+
+    // stage
+    Stage stage = new Stage();
+    stage.setScene(scene);
+
+    // add close when click off
+    stage.initStyle(StageStyle.DECORATED);
+
+    stage.setTitle("Shortcut Guide");
+    stage.setWidth(600);
+    stage.setHeight(500);
+    text.setWrappingWidth(stage.getWidth() - 20);
+    stage.show();
   }
 
   @Override

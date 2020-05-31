@@ -12,6 +12,7 @@
         <menus>
             <Menu text="About">
                 <items>
+                    <MenuItem text="Shortcut Guide" visible="true" onAction="#handleShortcutGuideAction"/>
                     <MenuItem text="License" visible="true" onAction="#handleLicenseAction"/>
                     <SeparatorMenuItem/>
                     <MenuItem text="About" visible="true" onAction="#handleAboutAction"/>
