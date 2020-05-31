@@ -1,6 +1,9 @@
 // http://www.java2s.com/Code/Java/JavaFX/UsingFXMLtocreateaUI.htm
 package savvy.ui.menu_bar;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -20,10 +23,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ResourceBundle;
 
 public class MenubarController implements Initializable {
 
@@ -162,19 +161,18 @@ public class MenubarController implements Initializable {
 
   public void showShortcutGuide() {
     // text
-    Text header =
-            new Text(
-                    "Shortcut Guide");
+    Text header = new Text("Shortcut Guide");
     Text text =
-            new Text("Switch to Facts Tab: CTRL + F"
-                            + "\n"
-                            + "\n"
-                            + "Switch to Entities Tab: CTRL + E"
-                            + "\n"
-                            + "\n"
-                            +"Switch to Relationships Tab: CTRL + R"
-                            + "\n"
-                            + "\n");
+        new Text(
+            "Switch to Facts Tab: CTRL + F"
+                + "\n"
+                + "\n"
+                + "Switch to Entities Tab: CTRL + E"
+                + "\n"
+                + "\n"
+                + "Switch to Relationships Tab: CTRL + R"
+                + "\n"
+                + "\n");
     VBox textBox = new VBox(10);
 
     header.setFont(Font.font("Arial", FontWeight.BOLD, 16));
@@ -184,7 +182,7 @@ public class MenubarController implements Initializable {
     text.setFont(Font.font("Arial", FontWeight.BOLD, 14));
     textBox.setAlignment(Pos.TOP_CENTER);
     text.setTextAlignment(TextAlignment.LEFT);
-    textBox.setMargin(text, new Insets(0 , 50, 50, 50));
+    textBox.setMargin(text, new Insets(0, 50, 50, 50));
     textBox.getChildren().addAll(header, text);
 
     Scene scene = new Scene(textBox, 600, 500);
