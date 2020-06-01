@@ -19,10 +19,14 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
+import savvy.core.entity.events.DoSelectFilterEntity;
 import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.events.DoFactCreate;
+import savvy.core.fact.events.DoSelectSubject;
 import savvy.core.relationship.Relationship;
+import savvy.core.relationship.events.DoSelectFilterRelationship;
 import savvy.core.relationship.events.RelationshipsRead;
+import savvy.ui.app.DoShowTab;
 
 /** Controller for the Fact Creation view */
 public class FactCreateController implements Initializable {
@@ -126,5 +130,20 @@ public class FactCreateController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipsRead ev) {
     updateRelationshipsAutocomplete(ev.relationships);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoSelectSubject ev) {
+    ev.selectSubject(this);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoShowTab ev) {
+    switch (ev.code) {
+      case E:
+        EventBus.getDefault().post(new DoSelectFilterEntity());
+      case R:
+        EventBus.getDefault().post(new DoSelectFilterRelationship());
+    }
   }
 }

@@ -19,10 +19,13 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import savvy.core.fact.events.DoSelectSubject;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipsFilter;
+import savvy.core.relationship.events.DoSelectFilterRelationship;
 import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
+import savvy.ui.app.DoShowTab;
 
 public class RelationshipsListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -97,6 +100,12 @@ public class RelationshipsListController implements Initializable {
     _filter.requestFocus();
   }
 
+  public void positionCaret() {
+    _filter.requestFocus();
+    _filter.positionCaret(0);
+    _filter.selectAll();
+  }
+
   // --- DO listeners ----------------------------------------------------------------------------\\
   // NONE
 
@@ -112,5 +121,20 @@ public class RelationshipsListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipsFiltered ev) {
     updateRelationshipsLV(ev.relationships);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoSelectFilterRelationship ev) {
+    ev.selectFilter(this);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoShowTab ev) {
+    switch (ev.code) {
+      case E:
+        EventBus.getDefault().post(new DoSelectFilterRelationship());
+      case F:
+        EventBus.getDefault().post(new DoSelectSubject());
+    }
   }
 }

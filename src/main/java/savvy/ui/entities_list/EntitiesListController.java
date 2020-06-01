@@ -22,8 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.entity.events.DoEntitiesFilter;
+import savvy.core.entity.events.DoSelectFilterEntity;
 import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
+import savvy.core.fact.events.DoSelectSubject;
+import savvy.core.relationship.events.DoSelectFilterRelationship;
+import savvy.ui.app.DoShowTab;
 
 public class EntitiesListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -96,8 +100,13 @@ public class EntitiesListController implements Initializable {
     log.info("filter entities list: {}", filter);
 
     EventBus.getDefault().post(new DoEntitiesFilter(filter));
-    _filter.clear();
+    positionCaret();
+  }
+
+  public void positionCaret() {
     _filter.requestFocus();
+    _filter.positionCaret(0);
+    _filter.selectAll();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\
@@ -115,5 +124,20 @@ public class EntitiesListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(EntitiesFiltered ev) {
     updateEntitiesLV(ev.entities);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoSelectFilterEntity ev) {
+    ev.selectFilter(this);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(DoShowTab ev) {
+    switch (ev.code) {
+      case F:
+        EventBus.getDefault().post(new DoSelectSubject());
+      case R:
+        EventBus.getDefault().post(new DoSelectFilterRelationship());
+    }
   }
 }
