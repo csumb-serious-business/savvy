@@ -19,13 +19,11 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import savvy.core.fact.events.DoSelectSubject;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipsFilter;
-import savvy.core.relationship.events.DoSelectFilterRelationship;
 import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
-import savvy.ui.app.DoShowTab;
+import savvy.ui.app.TabShown;
 
 public class RelationshipsListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -124,18 +122,10 @@ public class RelationshipsListController implements Initializable {
     updateRelationshipsLV(ev.relationships);
   }
 
+  // tab shown -> position caret
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(DoSelectFilterRelationship ev) {
-    ev.selectFilter(this);
+  public void on(TabShown ev) {
+    positionCaret();
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(DoShowTab ev) {
-    switch (ev.code) {
-      case E:
-        EventBus.getDefault().post(new DoSelectFilterRelationship());
-      case F:
-        EventBus.getDefault().post(new DoSelectSubject());
-    }
-  }
 }

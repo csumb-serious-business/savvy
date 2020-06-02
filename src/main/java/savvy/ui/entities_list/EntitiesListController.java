@@ -22,12 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import savvy.core.entity.Entity;
 import savvy.core.entity.events.DoEntitiesFilter;
-import savvy.core.entity.events.DoSelectFilterEntity;
 import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
-import savvy.core.fact.events.DoSelectSubject;
-import savvy.core.relationship.events.DoSelectFilterRelationship;
-import savvy.ui.app.DoShowTab;
+import savvy.ui.app.TabShown;
 
 public class EntitiesListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -127,18 +124,10 @@ public class EntitiesListController implements Initializable {
     updateEntitiesLV(ev.entities);
   }
 
+  // tab shown -> position caret
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(DoSelectFilterEntity ev) {
-    ev.selectFilter(this);
+  public void on(TabShown ev) {
+    positionCaret();
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void on(DoShowTab ev) {
-    switch (ev.code) {
-      case F:
-        EventBus.getDefault().post(new DoSelectSubject());
-      case R:
-        EventBus.getDefault().post(new DoSelectFilterRelationship());
-    }
-  }
 }

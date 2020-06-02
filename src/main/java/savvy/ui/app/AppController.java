@@ -83,12 +83,15 @@ public class AppController implements Initializable {
     switch (ev.code) {
       case F:
         tabs.getSelectionModel().select(tab_facts);
+        EventBus.getDefault().post(new TabShown(ev.code));
         break;
       case E:
         tabs.getSelectionModel().select(tab_entities);
+        EventBus.getDefault().post(new TabShown(ev.code));
         break;
       case R:
         tabs.getSelectionModel().select(tab_relationships);
+        EventBus.getDefault().post(new TabShown(ev.code));
         break;
     }
   }
