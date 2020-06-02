@@ -35,6 +35,13 @@ public class RelationshipsListController implements Initializable {
 
   private AutoCompletionBinding<String> _fb = null;
 
+  // moves the caret to a new position
+  public void positionCaret() {
+    _filter.requestFocus();
+    _filter.positionCaret(0);
+    _filter.selectAll();
+  }
+
   /**
    * updates the autocomplete filter
    *
@@ -98,12 +105,6 @@ public class RelationshipsListController implements Initializable {
     EventBus.getDefault().post(new DoRelationshipsFilter(filter));
     _filter.clear();
     _filter.requestFocus();
-  }
-
-  public void positionCaret() {
-    _filter.requestFocus();
-    _filter.positionCaret(0);
-    _filter.selectAll();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\

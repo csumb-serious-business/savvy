@@ -37,6 +37,13 @@ public class EntitiesListController implements Initializable {
 
   private AutoCompletionBinding<String> _fb = null;
 
+  // moves the caret to a new position
+  public void positionCaret() {
+    _filter.requestFocus();
+    _filter.positionCaret(0);
+    _filter.selectAll();
+  }
+
   /**
    * updates the autocomplete filter
    *
@@ -101,12 +108,6 @@ public class EntitiesListController implements Initializable {
 
     EventBus.getDefault().post(new DoEntitiesFilter(filter));
     positionCaret();
-  }
-
-  public void positionCaret() {
-    _filter.requestFocus();
-    _filter.positionCaret(0);
-    _filter.selectAll();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\
