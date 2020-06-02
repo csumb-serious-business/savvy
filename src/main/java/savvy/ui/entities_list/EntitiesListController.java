@@ -24,6 +24,7 @@ import savvy.core.entity.Entity;
 import savvy.core.entity.events.DoEntitiesFilter;
 import savvy.core.entity.events.EntitiesFiltered;
 import savvy.core.entity.events.EntitiesRead;
+import savvy.ui.app.TabShown;
 
 public class EntitiesListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -32,6 +33,13 @@ public class EntitiesListController implements Initializable {
   @FXML private TextField _filter;
 
   private AutoCompletionBinding<String> _fb = null;
+
+  // moves the caret to a new position
+  public void positionCaret() {
+    _filter.requestFocus();
+    _filter.positionCaret(0);
+    _filter.selectAll();
+  }
 
   /**
    * updates the autocomplete filter
@@ -96,8 +104,7 @@ public class EntitiesListController implements Initializable {
     log.info("filter entities list: {}", filter);
 
     EventBus.getDefault().post(new DoEntitiesFilter(filter));
-    _filter.clear();
-    _filter.requestFocus();
+    positionCaret();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\
@@ -115,5 +122,11 @@ public class EntitiesListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(EntitiesFiltered ev) {
     updateEntitiesLV(ev.entities);
+  }
+
+  // tab shown -> position caret
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(TabShown ev) {
+    positionCaret();
   }
 }

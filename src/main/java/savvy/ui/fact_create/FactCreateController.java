@@ -23,6 +23,7 @@ import savvy.core.entity.events.EntitiesRead;
 import savvy.core.fact.events.DoFactCreate;
 import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.RelationshipsRead;
+import savvy.ui.app.TabShown;
 
 /** Controller for the Fact Creation view */
 public class FactCreateController implements Initializable {
@@ -126,5 +127,11 @@ public class FactCreateController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipsRead ev) {
     updateRelationshipsAutocomplete(ev.relationships);
+  }
+
+  // tab shown -> position caret
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(TabShown ev) {
+    positionCaret();
   }
 }

@@ -23,6 +23,7 @@ import savvy.core.relationship.Relationship;
 import savvy.core.relationship.events.DoRelationshipsFilter;
 import savvy.core.relationship.events.RelationshipsFiltered;
 import savvy.core.relationship.events.RelationshipsRead;
+import savvy.ui.app.TabShown;
 
 public class RelationshipsListController implements Initializable {
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
@@ -31,6 +32,13 @@ public class RelationshipsListController implements Initializable {
   @FXML private TextField _filter;
 
   private AutoCompletionBinding<String> _fb = null;
+
+  // moves the caret to a new position
+  public void positionCaret() {
+    _filter.requestFocus();
+    _filter.positionCaret(0);
+    _filter.selectAll();
+  }
 
   /**
    * updates the autocomplete filter
@@ -112,5 +120,11 @@ public class RelationshipsListController implements Initializable {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipsFiltered ev) {
     updateRelationshipsLV(ev.relationships);
+  }
+
+  // tab shown -> position caret
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void on(TabShown ev) {
+    positionCaret();
   }
 }
