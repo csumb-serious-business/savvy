@@ -2,10 +2,12 @@ package savvy.ui.app;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -74,6 +76,8 @@ public class AppController implements Initializable {
     EventBus.getDefault().post(new DoFactsSearch(""));
     EventBus.getDefault().post(new DoRelationshipsFilter(""));
     EventBus.getDefault().post(new DoEntitiesFilter(""));
+
+    Platform.runLater(() -> EventBus.getDefault().post(new TabShown(KeyCode.F)));
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\

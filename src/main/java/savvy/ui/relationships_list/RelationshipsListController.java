@@ -127,5 +127,4 @@ public class RelationshipsListController implements Initializable {
   public void on(TabShown ev) {
     positionCaret();
   }
-
 }

@@ -134,5 +134,4 @@ public class FactCreateController implements Initializable {
   public void on(TabShown ev) {
     positionCaret();
   }
-
 }
