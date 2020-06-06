@@ -21,8 +21,14 @@
             GridPane.rowIndex="0"
             GridPane.columnIndex="0"
     >
-        <!-- filter field -->
-        <TextField fx:id="_filter" onKeyPressed="#handleKeyInput"/>
+
+        <!-- filter fields -->
+        <HBox fx:id="_filters"
+              spacing="10">
+            <TextField fx:id="_filter_A" onAction="#filter_action"/>
+            <TextField fx:id="_filter_B" onAction="#filter_action"/>
+        </HBox>
+
 
         <!-- load button -->
         <Region HBox.hgrow="ALWAYS"/>

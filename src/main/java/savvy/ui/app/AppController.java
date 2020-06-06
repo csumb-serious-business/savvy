@@ -1,6 +1,7 @@
 package savvy.ui.app;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -73,7 +74,7 @@ public class AppController implements Initializable {
     _relationships.init(_db);
 
     // manually populate the lists
-    EventBus.getDefault().post(new DoFactsSearch(""));
+    EventBus.getDefault().post(new DoFactsSearch(List.of()));
     EventBus.getDefault().post(new DoRelationshipsFilter(""));
     EventBus.getDefault().post(new DoEntitiesFilter(""));
 

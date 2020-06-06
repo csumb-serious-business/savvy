@@ -1,18 +1,19 @@
 package savvy.ui.facts_list;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.input.InputEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.HBox;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.TextFields;
 import org.greenrobot.eventbus.EventBus;
@@ -35,9 +36,12 @@ public class FactsListController implements Initializable {
 
   private final Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
   @FXML private ListView<FactItemView> lv_facts;
-  @FXML private TextField _filter;
-  private AutoCompletionBinding<String> _fb = null;
-  private String lastFilter = "";
+  @FXML private TextField _filter_A;
+  @FXML private TextField _filter_B;
+  @FXML private HBox _filters;
+  private AutoCompletionBinding<String> _fAb = null;
+  private AutoCompletionBinding<String> _fBb = null;
+  private List<String> _identifiers;
 
   /**
    * updates the autocomplete filter
@@ -46,19 +50,24 @@ public class FactsListController implements Initializable {
    */
   private void updateEntitiesAutocomplete(Collection<Entity> entities) {
     // clear old bindings
-    if (_fb != null) {
-      _fb.dispose();
+    if (_fAb != null) {
+      _fAb.dispose();
+    }
+
+    if (_fBb != null) {
+      _fBb.dispose();
     }
 
     // todo -- this is messy, receive something clean and use it directly [MBR]
-    var identifiers =
+    _identifiers =
         entities.stream()
             .map(Entity::getIdentifiers)
             .flatMap(Set::stream)
             .sorted()
             .collect(Collectors.toList());
 
-    _fb = TextFields.bindAutoCompletion(_filter, identifiers);
+    _fAb = TextFields.bindAutoCompletion(_filter_A, _identifiers);
+    _fBb = TextFields.bindAutoCompletion(_filter_B, _identifiers);
   }
 
   private void refreshFact(Fact previous, Fact current) {
@@ -78,22 +87,40 @@ public class FactsListController implements Initializable {
     lv_facts.getItems().addAll(layouts);
   }
 
-  // === events ==================================================================================\\
-  /**
-   * Handle action related to input (in this case specifically only responds to keyboard event ENTER
-   * when on the filter field).
-   *
-   * @param event Input event.
-   */
+  // todo -- this does not work due to
+  //  the next new field not being added to the tab order [MBR]
   @FXML
-  private void handleKeyInput(final InputEvent event) {
-    if (event instanceof KeyEvent) {
-      final KeyEvent keyEvent = (KeyEvent) event;
-      if (keyEvent.getCode() == KeyCode.ENTER) {
-        filter_action();
-      }
-    }
+  private void updateFilterFields() {
+    log.info("updating filter field");
+
+    // retain non-empty fields
+    var checkBlanks = _filters.getChildren().filtered(TextField.class::isInstance);
+    var retain = new ArrayList<Node>();
+    checkBlanks.forEach(
+        f -> {
+          if (!((TextField) f).getText().isBlank()) {
+            retain.add(f);
+          }
+        });
+
+    _filters.getChildren().clear();
+
+    AtomicInteger s = new AtomicInteger();
+
+    // set ids for traversal
+    retain.forEach(f -> f.setId("f" + s.getAndIncrement()));
+
+    var toAdd = new TextField();
+    toAdd.setOnKeyTyped(ev -> updateFilterFields());
+    TextFields.bindAutoCompletion(toAdd, _identifiers);
+    toAdd.setOnAction(ev -> filter_action());
+    toAdd.setId("f" + s.getAndIncrement());
+
+    retain.add(toAdd);
+    _filters.getChildren().addAll(retain);
   }
+
+  // === events ==================================================================================\\
   // --- Emitters --------------------------------------------------------------------------------\\
   @Override
   public void initialize(URL location, ResourceBundle resources) {
@@ -101,13 +128,20 @@ public class FactsListController implements Initializable {
   }
 
   /** filters the facts list view */
-  public void filter_action() {
-    var filter = _filter.getText();
-    lastFilter = filter;
-    log.info("filter facts list: {}", filter);
-    EventBus.getDefault().post(new DoFactsSearch(filter));
-    _filter.clear();
-    _filter.requestFocus();
+  @FXML
+  private void filter_action() {
+    var filterA = _filter_A.getText();
+    var filterB = _filter_B.getText();
+
+    log.info("filter facts list -- A: {}, B: {}", filterA, filterB);
+
+    // search for both
+    EventBus.getDefault().post(new DoFactsSearch(List.of(filterA, filterB)));
+
+    _filter_A.clear();
+    _filter_B.clear();
+
+    _filter_A.requestFocus();
   }
 
   // --- DO listeners ----------------------------------------------------------------------------\\
@@ -140,11 +174,11 @@ public class FactsListController implements Initializable {
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(EntityUpdated ev) {
-    EventBus.getDefault().post(new DoFactsSearch(""));
+    EventBus.getDefault().post(new DoFactsSearch(List.of()));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(RelationshipUpdated ev) {
-    EventBus.getDefault().post(new DoFactsSearch(""));
+    EventBus.getDefault().post(new DoFactsSearch(List.of()));
   }
 }

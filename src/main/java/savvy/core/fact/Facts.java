@@ -38,21 +38,35 @@ public class Facts {
   /**
    * searches the database for related facts
    *
-   * @param filter if blank, all facts are returned otherwise only related facts
+   * @param filters if blank, all facts are returned otherwise only related facts
    * @return a sorted list of related facts
    */
-  private List<Fact> factsSearch(String filter) {
-    var found = Entities.getEntitiesWithIdentifier(_entities, filter);
-    if (!found.isEmpty()) {
-      filter = found.get(0).getName();
-    }
+  private List<Fact> factsSearch(List<String> filters) {
+
+    var found =
+        filters.stream()
+            .map(
+                f -> {
+                  var entities = Entities.getEntitiesWithIdentifier(_entities, f);
+                  if (entities.isEmpty()) {
+                    return f;
+                  } else {
+                    return entities.get(0).getName();
+                  }
+                })
+            .collect(Collectors.toList());
 
     _items.clear();
-    if (filter.isBlank()) {
+
+    if (found.isEmpty()) {
       _items.addAll(_dao.readAllFacts());
+    } else if (found.size() == 1) {
+      _items.addAll(_dao.readRelatedFacts(found.get(0)));
     } else {
-      _items.addAll(_dao.readRelatedFacts(filter));
+      var a = _dao.readFactsBetween(found.get(0), found.get(1));
+      _items.addAll(a);
     }
+
     return _items.stream().sorted().collect(Collectors.toList());
   }
 
@@ -134,7 +148,8 @@ public class Facts {
   // --- DO listeners ----------------------------------------------------------------------------\\
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void on(DoFactsSearch ev) {
-    var facts = factsSearch(ev.filter);
+    var facts = factsSearch(ev.filters);
+
     EventBus.getDefault().post(new FactsSearched(facts));
   }
 

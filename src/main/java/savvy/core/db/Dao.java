@@ -2,10 +2,13 @@ package savvy.core.db;
 
 import static savvy.core.db.Constants.ALIASES;
 import static savvy.core.db.Constants.CORRELATES;
+import static savvy.core.db.Constants.CYPHER_ALL_BETWEEN;
 import static savvy.core.db.Constants.CYPHER_MERGE;
 import static savvy.core.db.Constants.ENTITY_LABEL;
 import static savvy.core.db.Constants.MODIFIER;
 import static savvy.core.db.Constants.NAME;
+import static savvy.core.db.Constants.NAME_A;
+import static savvy.core.db.Constants.NAME_B;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -143,6 +146,83 @@ public class Dao {
   }
 
   /**
+   * given a compound path like: E1 -R1-> E2 -R2-> E3 gather facts as if they were like: E1 -R1->
+   * E2, E2 -R2-> E3
+   *
+   * @param path to convert
+   * @return a set of corresponding Facts
+   */
+  private Set<Fact> compoundPathToFacts(Path path) {
+    var set = new HashSet<Fact>();
+
+    path.relationships()
+        .forEach(
+            rel -> {
+              var fact = factFromRelationship(rel);
+              set.add(fact);
+            });
+
+    return set;
+  }
+
+  /**
+   * Neo4j uses relationships as part of a path those relationships reference everything we need to
+   * make a Fact
+   *
+   * @param relationship a Neo4j Relationship to convert
+   * @return a Fact
+   */
+  private Fact factFromRelationship(org.neo4j.graphdb.Relationship relationship) {
+    var rel = relationship;
+    var serde = new SerDe<String>();
+    var r = rel.getProperty(NAME).toString();
+    var rc = new SerDe<Correlate>().toSet(rel.getProperty(CORRELATES));
+    var rm = new SerDe<Modifier>().toType(rel.getProperty(MODIFIER));
+
+    var s = rel.getStartNode().getProperty(NAME).toString();
+    var sa = serde.toSet(rel.getStartNode().getProperty(ALIASES));
+
+    var o = rel.getEndNode().getProperty(NAME).toString();
+    var oa = serde.toSet(rel.getEndNode().getProperty(ALIASES));
+
+    return new Fact(new Entity(s, sa), new Relationship(r, rc), new Entity(o, oa), rm);
+  }
+
+  /**
+   * traverse the graph and gather every path between two entities for each compound path found
+   * between them, derive a set of facts
+   *
+   * @param fromEntityName start point (arbitrary, since direction is ignored)
+   * @param toEntityName end point
+   * @return a corresponding set of Facts
+   */
+  public Set<Fact> readFactsBetween(String fromEntityName, String toEntityName) {
+    try (var tx = _service.beginTx()) {
+      log.info("read facts between");
+      var params = new HashMap<String, Object>();
+      params.put(NAME_A, fromEntityName);
+      params.put(NAME_B, toEntityName);
+
+      var set = new TreeSet<Fact>();
+      var result = tx.execute(CYPHER_ALL_BETWEEN, params);
+
+      result.forEachRemaining(
+          e -> {
+            var entries = e.entrySet();
+            entries.forEach(
+                p -> {
+                  Path path = (Path) p.getValue();
+
+                  log.info("path: {}", path);
+                  set.addAll(compoundPathToFacts(path));
+                });
+          });
+
+      return set;
+    }
+  }
+
+  /**
    * Traverse the graph collecting relationships for all entities
    *
    * @return returns a set of Facts corresponding to the relationships
@@ -177,20 +257,7 @@ public class Dao {
    */
   private Fact pathAsFact(Path path) {
     var rel = path.lastRelationship();
-    var r = rel.getProperty(NAME).toString();
-    var rc = new SerDe<Correlate>().toSet(rel.getProperty(CORRELATES));
-    var rm = new SerDe<Modifier>().toType(rel.getProperty(MODIFIER));
-
-    var serde = new SerDe<String>();
-    var s = rel.getStartNode().getProperty(NAME).toString();
-    var sa = serde.toSet(rel.getStartNode().getProperty(ALIASES));
-
-    var o = rel.getEndNode().getProperty(NAME).toString();
-    var oa = serde.toSet(rel.getEndNode().getProperty(ALIASES));
-
-    var fact = new Fact(new Entity(s, sa), new Relationship(r, rc), new Entity(o, oa), rm);
-    //    log.info("fact: {}, modifiers: {}", fact, rm);
-    return fact;
+    return factFromRelationship(rel);
   }
 
   // --- entities --------------------------------------------------------------------------------\\
