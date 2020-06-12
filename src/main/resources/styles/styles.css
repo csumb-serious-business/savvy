@@ -36,7 +36,7 @@
 }
 
 .menu-bar {
-    -fx-background-color: #0A3254; /*menu bar blue*/
+    -fx-background-color: #1b89e7; /*menu bar blue*/
     -fx-opacity: 1;
 }
 
@@ -45,6 +45,7 @@
     -fx-font-family: "Open Sans";
     -fx-text-fill: white;
     -fx-font-weight: bold;
+    -fx-font-style: italic;
     -fx-padding: 2px;
 }
 
