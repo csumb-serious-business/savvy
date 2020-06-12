@@ -32,6 +32,7 @@
     <ListView fx:id="lv_entities"
               GridPane.rowIndex="1"
               GridPane.columnIndex="0"
+              GridPane.vgrow="ALWAYS"
     />
 
 </GridPane>
