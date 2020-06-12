@@ -10,7 +10,7 @@
       fx:controller="savvy.ui.menu_bar.MenubarController">
     <MenuBar fx:id="menuBar">
         <menus>
-            <Menu text="About">
+            <Menu text="Savvy">
                 <items>
                     <MenuItem text="Shortcut Guide" visible="true" onAction="#handleShortcutGuideAction"/>
                     <MenuItem text="License" visible="true" onAction="#handleLicenseAction"/>
